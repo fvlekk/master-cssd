@@ -1,0 +1,301 @@
+
+$ hdfs dfs -mkdir -p /user/falek/accidents/caracteristiques
+
+$ hdfs dfs -put -f /home/falek/data/clean/caracteristiques-2024.csv /user/falek/accidents/caracteristiques/
+
+$ hdfs dfs -mkdir -p /user/falek/accidents/lieux
+
+$ hdfs dfs -put -f /home/falek/data/clean/lieux-2024.csv /user/falek/accidents/lieux/
+
+$ hdfs dfs -mkdir -p /user/falek/accidents/vehicules
+
+$ hdfs dfs -put -f /home/falek/data/clean/vehicules-2024.csv /user/falek/accidents/vehicules/
+
+$ hdfs dfs -mkdir -p /user/falek/accidents/usagers
+
+$ hdfs dfs -put -f /home/falek/data/clean/usagers-2024.csv /user/falek/accidents/usagers/
+
+$ hdfs dfs -ls -R /user/falek/accidents
+drwxr-xr-x   - falek supergroup          0 2026-11-03 21:51 /user/falek/accidents/caracteristiques
+-rw-r--r--   1 falek supergroup    4893792 2026-11-03 21:51 /user/falek/accidents/caracteristiques/caracteristiques-2024.csv
+drwxr-xr-x   - falek supergroup          0 2026-11-03 21:51 /user/falek/accidents/lieux
+-rw-r--r--   1 falek supergroup    4403482 2026-11-03 21:51 /user/falek/accidents/lieux/lieux-2024.csv
+drwxr-xr-x   - falek supergroup          0 2026-11-03 21:51 /user/falek/accidents/usagers
+-rw-r--r--   1 falek supergroup    9425214 2026-11-03 21:51 /user/falek/accidents/usagers/usagers-2024.csv
+drwxr-xr-x   - falek supergroup          0 2026-11-03 21:51 /user/falek/accidents/vehicules
+-rw-r--r--   1 falek supergroup    4330582 2026-11-03 21:51 /user/falek/accidents/vehicules/vehicules-2024.csv
+
+$ hdfs dfs -ls -h /user/falek/accidents/usagers
+Found 1 items
+-rw-r--r--   1 falek supergroup      9.0 M 2026-11-03 21:51 /user/falek/accidents/usagers/usagers-2024.csv
+
+$ hdfs dfs -du -h /user/falek/accidents
+4.7 M  4.7 M  /user/falek/accidents/caracteristiques
+4.2 M  4.2 M  /user/falek/accidents/lieux
+9.0 M  9.0 M  /user/falek/accidents/usagers
+4.1 M  4.1 M  /user/falek/accidents/vehicules
+
+$ hdfs dfs -count /user/falek/accidents
+           5            4           23053070 /user/falek/accidents
+
+$ hdfs dfs -cat /user/falek/accidents/usagers/usagers-2024.csv | head -5
+Num_Acc;id_usager;id_vehicule;num_veh;place;catu;grav;sexe;an_nais;trajet;secu1;secu2;secu3;locp;actp;etatp
+202400000001;203 988 581;155 781 758;A01;1;1;3;1;2003;2;1;-1;-1;-1;-1;-1
+202400000001;203 988 582;155 781 759;B01;1;1;1;1;1997;4;1;-1;-1;-1;-1;-1
+202400000002;203 988 579;155 781 757;A01;10;3;3;2;1927;5;0;-1;-1;3;3;1
+202400000002;203 988 580;155 781 757;A01;1;1;1;1;1987;4;1;0;-1;3;3;1
+
+$ hdfs dfs -tail /user/falek/accidents/usagers/usagers-2024.csv | tail -2
+202400054402;203 859 571;155 686 121;B01;1;1;4;2;1986;9;1;0;-1;-1;-1;-1
+202400054402;203 859 574;155 686 123;C01;1;1;1;1;1990;4;1;0;-1;-1;-1;-1
+
+$ hdfs dfs -stat %n %b octets, taille de bloc %o, replication %r /user/falek/accidents/usagers/usagers-2024.csv
+usagers-2024.csv 9425214 octets, taille de bloc 134217728, replication 1
+
+$ hdfs fsck /user/falek/accidents -files -blocks -locations
+Connecting to namenode via http://localhost:9870/fsck?ugi=falek&files=1&blocks=1&locations=1&path=%2Fuser%2Ffalek%2Faccidents
+FSCK started by falek (auth:SIMPLE) from /127.0.0.1 for path /user/falek/accidents at Tue Nov 03 21:51:43 CET 2026
+
+/user/falek/accidents <dir>
+/user/falek/accidents/caracteristiques <dir>
+/user/falek/accidents/caracteristiques/caracteristiques-2024.csv 4893792 bytes, replicated: replication=1, 1 block(s):  OK
+0. BP-469943336-127.0.1.1-1791385651418:blk_1073741838_1014 len=4893792 Live_repl=1  [DatanodeInfoWithStorage[127.0.0.1:9866,DS-3d55b1bd-16d4-4dd8-94ce-f95e2dac0d08,DISK]]
+
+/user/falek/accidents/lieux <dir>
+/user/falek/accidents/lieux/lieux-2024.csv 4403482 bytes, replicated: replication=1, 1 block(s):  OK
+0. BP-469943336-127.0.1.1-1791385651418:blk_1073741839_1015 len=4403482 Live_repl=1  [DatanodeInfoWithStorage[127.0.0.1:9866,DS-3d55b1bd-16d4-4dd8-94ce-f95e2dac0d08,DISK]]
+
+/user/falek/accidents/usagers <dir>
+/user/falek/accidents/usagers/usagers-2024.csv 9425214 bytes, replicated: replication=1, 1 block(s):  OK
+0. BP-469943336-127.0.1.1-1791385651418:blk_1073741841_1017 len=9425214 Live_repl=1  [DatanodeInfoWithStorage[127.0.0.1:9866,DS-3d55b1bd-16d4-4dd8-94ce-f95e2dac0d08,DISK]]
+
+/user/falek/accidents/vehicules <dir>
+/user/falek/accidents/vehicules/vehicules-2024.csv 4330582 bytes, replicated: replication=1, 1 block(s):  OK
+0. BP-469943336-127.0.1.1-1791385651418:blk_1073741840_1016 len=4330582 Live_repl=1  [DatanodeInfoWithStorage[127.0.0.1:9866,DS-3d55b1bd-16d4-4dd8-94ce-f95e2dac0d08,DISK]]
+
+
+Status: HEALTHY
+ Number of data-nodes:	1
+ Number of racks:		1
+ Total dirs:			5
+ Total symlinks:		0
+
+Replicated Blocks:
+ Total size:	23053070 B
+ Total files:	4
+ Total blocks (validated):	4 (avg. block size 5763267 B)
+ Minimally replicated blocks:	4 (100.0 %)
+ Over-replicated blocks:	0 (0.0 %)
+ Under-replicated blocks:	0 (0.0 %)
+ Mis-replicated blocks:		0 (0.0 %)
+ Default replication factor:	1
+ Average block replication:	1.0
+ Missing blocks:		0
+ Corrupt blocks:		0
+ Missing replicas:		0 (0.0 %)
+ Blocks queued for replication:	0
+
+Erasure Coded Block Groups:
+ Total size:	0 B
+ Total files:	0
+ Total block groups (validated):	0
+ Minimally erasure-coded block groups:	0
+ Over-erasure-coded block groups:	0
+ Under-erasure-coded block groups:	0
+ Unsatisfactory placement block groups:	0
+ Average block group size:	0.0
+ Missing block groups:		0
+ Corrupt block groups:		0
+ Missing internal blocks:	0
+ Blocks queued for replication:	0
+FSCK ended at Tue Nov 03 21:51:43 CET 2026 in 3 milliseconds
+
+
+The filesystem under path '/user/falek/accidents' is HEALTHY
+
+$ hdfs dfsadmin -report
+Configured Capacity: 1081101176832 (1006.85 GB)
+Present Capacity: 968814064314 (902.28 GB)
+DFS Remaining: 968790441984 (902.26 GB)
+DFS Used: 23622330 (22.53 MB)
+DFS Used%: 0.00%
+Replicated Blocks:
+	Under replicated blocks: 0
+	Blocks with corrupt replicas: 0
+	Missing blocks: 0
+	Missing blocks (with replication factor 1): 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+Erasure Coded Block Groups: 
+	Low redundancy block groups: 0
+	Block groups with corrupt internal blocks: 0
+	Missing block groups: 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+
+-------------------------------------------------
+Live datanodes (1):
+
+Name: 127.0.0.1:9866 (localhost)
+Hostname: Glock.localdomain
+Decommission Status : Normal
+Configured Capacity: 1081101176832 (1006.85 GB)
+DFS Used: 23622330 (22.53 MB)
+Non DFS Used: 57294757190 (53.36 GB)
+DFS Remaining: 968790441984 (902.26 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 89.61%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Tue Nov 03 21:51:43 CET 2026
+Last Block Report: Tue Nov 03 21:49:52 CET 2026
+Num of Blocks: 7
+
+
+
+$ hdfs dfs -D dfs.blocksize=1048576 -put -f /home/falek/data/clean/usagers-2024.csv /user/falek/usagers_small_blocks.csv
+
+$ hdfs fsck /user/falek/usagers_small_blocks.csv -files -blocks
+Connecting to namenode via http://localhost:9870/fsck?ugi=falek&files=1&blocks=1&path=%2Fuser%2Ffalek%2Fusagers_small_blocks.csv
+FSCK started by falek (auth:SIMPLE) from /127.0.0.1 for path /user/falek/usagers_small_blocks.csv at Tue Nov 03 21:51:47 CET 2026
+
+/user/falek/usagers_small_blocks.csv 9425214 bytes, replicated: replication=1, 9 block(s):  OK
+0. BP-469943336-127.0.1.1-1791385651418:blk_1073741842_1018 len=1048576 Live_repl=1
+1. BP-469943336-127.0.1.1-1791385651418:blk_1073741843_1019 len=1048576 Live_repl=1
+2. BP-469943336-127.0.1.1-1791385651418:blk_1073741844_1020 len=1048576 Live_repl=1
+3. BP-469943336-127.0.1.1-1791385651418:blk_1073741845_1021 len=1048576 Live_repl=1
+4. BP-469943336-127.0.1.1-1791385651418:blk_1073741846_1022 len=1048576 Live_repl=1
+5. BP-469943336-127.0.1.1-1791385651418:blk_1073741847_1023 len=1048576 Live_repl=1
+6. BP-469943336-127.0.1.1-1791385651418:blk_1073741848_1024 len=1048576 Live_repl=1
+7. BP-469943336-127.0.1.1-1791385651418:blk_1073741849_1025 len=1048576 Live_repl=1
+8. BP-469943336-127.0.1.1-1791385651418:blk_1073741850_1026 len=1036606 Live_repl=1
+
+
+Status: HEALTHY
+ Number of data-nodes:	1
+ Number of racks:		1
+ Total dirs:			0
+ Total symlinks:		0
+
+Replicated Blocks:
+ Total size:	9425214 B
+ Total files:	1
+ Total blocks (validated):	9 (avg. block size 1047246 B)
+ Minimally replicated blocks:	9 (100.0 %)
+ Over-replicated blocks:	0 (0.0 %)
+ Under-replicated blocks:	0 (0.0 %)
+ Mis-replicated blocks:		0 (0.0 %)
+ Default replication factor:	1
+ Average block replication:	1.0
+ Missing blocks:		0
+ Corrupt blocks:		0
+ Missing replicas:		0 (0.0 %)
+ Blocks queued for replication:	0
+
+Erasure Coded Block Groups:
+ Total size:	0 B
+ Total files:	0
+ Total block groups (validated):	0
+ Minimally erasure-coded block groups:	0
+ Over-erasure-coded block groups:	0
+ Under-erasure-coded block groups:	0
+ Unsatisfactory placement block groups:	0
+ Average block group size:	0.0
+ Missing block groups:		0
+ Corrupt block groups:		0
+ Missing internal blocks:	0
+ Blocks queued for replication:	0
+FSCK ended at Tue Nov 03 21:51:47 CET 2026 in 2 milliseconds
+
+
+The filesystem under path '/user/falek/usagers_small_blocks.csv' is HEALTHY
+
+$ timeout 10 hdfs dfs -setrep -w 2 /user/falek/usagers_small_blocks.csv
+Replication 2 set: /user/falek/usagers_small_blocks.csv
+Waiting for /user/falek/usagers_small_blocks.csv ....
+
+$ hdfs fsck /user/falek/usagers_small_blocks.csv
+Connecting to namenode via http://localhost:9870/fsck?ugi=falek&path=%2Fuser%2Ffalek%2Fusagers_small_blocks.csv
+FSCK started by falek (auth:SIMPLE) from /127.0.0.1 for path /user/falek/usagers_small_blocks.csv at Tue Nov 03 21:51:59 CET 2026
+
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741842_1018. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741843_1019. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741844_1020. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741845_1021. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741846_1022. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741847_1023. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741848_1024. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741849_1025. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+/user/falek/usagers_small_blocks.csv:  Under replicated BP-469943336-127.0.1.1-1791385651418:blk_1073741850_1026. Target Replicas is 2 but found 1 live replica(s), 0 decommissioned replica(s), 0 decommissioning replica(s).
+
+Status: HEALTHY
+ Number of data-nodes:	1
+ Number of racks:		1
+ Total dirs:			0
+ Total symlinks:		0
+
+Replicated Blocks:
+ Total size:	9425214 B
+ Total files:	1
+ Total blocks (validated):	9 (avg. block size 1047246 B)
+ Minimally replicated blocks:	9 (100.0 %)
+ Over-replicated blocks:	0 (0.0 %)
+ Under-replicated blocks:	9 (100.0 %)
+ Mis-replicated blocks:		0 (0.0 %)
+ Default replication factor:	1
+ Average block replication:	1.0
+ Missing blocks:		0
+ Corrupt blocks:		0
+ Missing replicas:		9 (50.0 %)
+ Blocks queued for replication:	0
+
+Erasure Coded Block Groups:
+ Total size:	0 B
+ Total files:	0
+ Total block groups (validated):	0
+ Minimally erasure-coded block groups:	0
+ Over-erasure-coded block groups:	0
+ Under-erasure-coded block groups:	0
+ Unsatisfactory placement block groups:	0
+ Average block group size:	0.0
+ Missing block groups:		0
+ Corrupt block groups:		0
+ Missing internal blocks:	0
+ Blocks queued for replication:	0
+FSCK ended at Tue Nov 03 21:51:59 CET 2026 in 1 milliseconds
+
+
+The filesystem under path '/user/falek/usagers_small_blocks.csv' is HEALTHY
+
+$ hdfs dfs -cp -f /user/falek/usagers_small_blocks.csv /user/falek/usagers_copy.csv
+
+$ hdfs dfs -mv /user/falek/usagers_copy.csv /user/falek/accidents/usagers_backup.csv
+
+$ hdfs dfs -get -f /user/falek/accidents/usagers_backup.csv /home/falek/usagers_from_hdfs.csv
+
+$ diff ~/data/clean/usagers-2024.csv ~/usagers_from_hdfs.csv
+identiques
+
+$ hdfs dfs -rm /user/falek/accidents/usagers_backup.csv
+Deleted /user/falek/accidents/usagers_backup.csv
+
+$ hdfs dfs -rm /user/falek/usagers_small_blocks.csv
+Deleted /user/falek/usagers_small_blocks.csv
+
+$ hdfs dfs -getmerge /user/falek/accidents/lieux /tmp/lieux_merged.csv
+
+$ wc -l /tmp/lieux_merged.csv
+70249 /tmp/lieux_merged.csv

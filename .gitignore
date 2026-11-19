@@ -1,0 +1,14 @@
+# Teachers' material (statements, slides): kept on disk, not published
+**/enonce/
+data/tp-hadoop-spark/sujet/
+# Handed-in archives: same files as the folder
+*.zip
+# Builds, downloads, local tool state
+bases-de-donnees/tp-jdbc/lib/
+bases-de-donnees/tp-jdbc/out/
+python/projet_optimisation/simplex
+.claude/
+.vercel/
+.venv/
+__pycache__/
+*.pyc

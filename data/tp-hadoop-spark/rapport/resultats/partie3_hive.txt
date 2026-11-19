@@ -1,0 +1,833 @@
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/home/falek/hive/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/falek/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+Hive Session ID = 8825909c-a7cb-48d2-978f-1cd8bbf673d6
+
+Logging initialized using configuration in jar:file:/home/falek/hive/lib/hive-common-3.1.3.jar!/hive-log4j2.properties Async: true
+Hive Session ID = 646c4401-7520-4610-b4f1-09a386e478dc
+SET hive.cli.print.header=true
+
+
+CREATE DATABASE IF NOT EXISTS baac
+OK
+Time taken: 0.419 seconds
+
+USE baac
+OK
+Time taken: 0.015 seconds
+
+
+DROP TABLE IF EXISTS caracteristiques
+OK
+Time taken: 0.463 seconds
+
+DROP TABLE IF EXISTS lieux
+OK
+Time taken: 0.087 seconds
+
+DROP TABLE IF EXISTS vehicules
+OK
+Time taken: 0.052 seconds
+
+DROP TABLE IF EXISTS usagers
+OK
+Time taken: 0.056 seconds
+
+DROP TABLE IF EXISTS usagers_orc
+OK
+Time taken: 0.022 seconds
+
+
+CREATE EXTERNAL TABLE caracteristiques (
+  num_acc STRING, jour INT, mois INT, an INT, hrmn STRING, lum INT,
+  dep STRING, com STRING, agg INT, `int` INT, atm INT, col INT,
+  adr STRING, lat STRING, `long` STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ';'
+STORED AS TEXTFILE
+LOCATION '/user/falek/accidents/caracteristiques'
+TBLPROPERTIES ('skip.header.line.count'='1')
+OK
+Time taken: 0.168 seconds
+
+
+CREATE EXTERNAL TABLE lieux (
+  num_acc STRING, catr INT, voie STRING, v1 STRING, v2 STRING, circ INT,
+  nbv INT, vosp INT, prof INT, pr STRING, pr1 STRING, `plan` INT,
+  lartpc STRING, larrout STRING, surf INT, infra INT, situ INT, vma INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ';'
+STORED AS TEXTFILE
+LOCATION '/user/falek/accidents/lieux'
+TBLPROPERTIES ('skip.header.line.count'='1')
+OK
+Time taken: 0.05 seconds
+
+
+CREATE EXTERNAL TABLE vehicules (
+  num_acc STRING, id_vehicule STRING, num_veh STRING, senc INT, catv INT,
+  obs INT, obsm INT, choc INT, manv INT, motor INT, occutc STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ';'
+STORED AS TEXTFILE
+LOCATION '/user/falek/accidents/vehicules'
+TBLPROPERTIES ('skip.header.line.count'='1')
+OK
+Time taken: 0.033 seconds
+
+
+CREATE EXTERNAL TABLE usagers (
+  num_acc STRING, id_usager STRING, id_vehicule STRING, num_veh STRING,
+  place INT, catu INT, grav INT, sexe INT, an_nais INT, trajet INT,
+  secu1 INT, secu2 INT, secu3 INT, locp INT, actp STRING, etatp INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ';'
+STORED AS TEXTFILE
+LOCATION '/user/falek/accidents/usagers'
+TBLPROPERTIES ('skip.header.line.count'='1')
+OK
+Time taken: 0.034 seconds
+
+
+SHOW TABLES
+OK
+tab_name
+caracteristiques
+lieux
+usagers
+vehicules
+Time taken: 0.066 seconds, Fetched: 4 row(s)
+
+DESCRIBE FORMATTED usagers
+OK
+col_name	data_type	comment
+# col_name            	data_type           	comment             
+num_acc             	string              	                    
+id_usager           	string              	                    
+id_vehicule         	string              	                    
+num_veh             	string              	                    
+place               	int                 	                    
+catu                	int                 	                    
+grav                	int                 	                    
+sexe                	int                 	                    
+an_nais             	int                 	                    
+trajet              	int                 	                    
+secu1               	int                 	                    
+secu2               	int                 	                    
+secu3               	int                 	                    
+locp                	int                 	                    
+actp                	string              	                    
+etatp               	int                 	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	baac                	 
+OwnerType:          	USER                	 
+Owner:              	falek               	 
+CreateTime:         	Tue Nov 03 22:01:01 CET 2026	 
+LastAccessTime:     	UNKNOWN             	 
+Retention:          	0                   	 
+Location:           	hdfs://localhost:9000/user/falek/accidents/usagers	 
+Table Type:         	EXTERNAL_TABLE      	 
+Table Parameters:	 	 
+	EXTERNAL            	TRUE                
+	bucketing_version   	2                   
+	numFiles            	1                   
+	skip.header.line.count	1                   
+	totalSize           	9425214             
+	transient_lastDdlTime	1793739661          
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe	 
+InputFormat:        	org.apache.hadoop.mapred.TextInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	field.delim         	;                   
+	serialization.format	;                   
+Time taken: 0.079 seconds, Fetched: 46 row(s)
+
+
+SELECT 'accidents' AS tbl, COUNT(*) AS nb FROM caracteristiques
+UNION ALL SELECT 'vehicules', COUNT(*) FROM vehicules
+UNION ALL SELECT 'usagers', COUNT(*) FROM usagers
+Query ID = falek_20261103220101_a344f630-a19c-4b34-9134-61f86849e22c
+Total jobs = 4
+Launching Job 1 out of 4
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0018, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0018/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0018
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:01:09,131 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:01:13,263 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.85 sec
+2026-11-03 22:01:18,396 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 3.41 sec
+MapReduce Total cumulative CPU time: 3 seconds 410 msec
+Ended Job = job_1793739054156_0018
+Launching Job 2 out of 4
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0019, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0019/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0019
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2026-11-03 22:01:29,492 Stage-3 map = 0%,  reduce = 0%
+2026-11-03 22:01:33,578 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.79 sec
+2026-11-03 22:01:38,680 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 3.1 sec
+MapReduce Total cumulative CPU time: 3 seconds 100 msec
+Ended Job = job_1793739054156_0019
+Launching Job 3 out of 4
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0020, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0020/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0020
+Hadoop job information for Stage-4: number of mappers: 1; number of reducers: 1
+2026-11-03 22:01:49,716 Stage-4 map = 0%,  reduce = 0%
+2026-11-03 22:01:53,792 Stage-4 map = 100%,  reduce = 0%, Cumulative CPU 1.78 sec
+2026-11-03 22:01:58,890 Stage-4 map = 100%,  reduce = 100%, Cumulative CPU 3.41 sec
+MapReduce Total cumulative CPU time: 3 seconds 410 msec
+Ended Job = job_1793739054156_0020
+Launching Job 4 out of 4
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793739054156_0021, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0021/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0021
+Hadoop job information for Stage-2: number of mappers: 3; number of reducers: 0
+2026-11-03 22:02:10,291 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:02:15,432 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 5.76 sec
+MapReduce Total cumulative CPU time: 5 seconds 760 msec
+Ended Job = job_1793739054156_0021
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 3.41 sec   HDFS Read: 4907817 HDFS Write: 126 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 3.1 sec   HDFS Read: 4344006 HDFS Write: 127 SUCCESS
+Stage-Stage-4: Map: 1  Reduce: 1   Cumulative CPU: 3.41 sec   HDFS Read: 9439570 HDFS Write: 125 SUCCESS
+Stage-Stage-2: Map: 3   Cumulative CPU: 5.76 sec   HDFS Read: 12882 HDFS Write: 344 SUCCESS
+Total MapReduce CPU Time Spent: 15 seconds 680 msec
+OK
+_u1.tbl	_u1.nb
+vehicules	92678
+accidents	54402
+usagers	125187
+Time taken: 75.534 seconds, Fetched: 3 row(s)
+
+
+SELECT mois, COUNT(*) AS nb FROM caracteristiques GROUP BY mois ORDER BY mois
+Query ID = falek_20261103220217_afc7f826-a761-42bd-bb18-68dde2280b2a
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0022, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0022/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0022
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:02:27,515 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:02:31,594 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.93 sec
+2026-11-03 22:02:36,680 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 3.5 sec
+MapReduce Total cumulative CPU time: 3 seconds 500 msec
+Ended Job = job_1793739054156_0022
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0023, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0023/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0023
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:02:47,624 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:02:51,706 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.48 sec
+2026-11-03 22:02:56,791 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 3.1 sec
+MapReduce Total cumulative CPU time: 3 seconds 100 msec
+Ended Job = job_1793739054156_0023
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 3.5 sec   HDFS Read: 4907875 HDFS Write: 348 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 3.1 sec   HDFS Read: 7761 HDFS Write: 318 SUCCESS
+Total MapReduce CPU Time Spent: 6 seconds 600 msec
+OK
+mois	nb
+1	4069
+2	3792
+3	4370
+4	4586
+5	4517
+6	5135
+7	5209
+8	4450
+9	4620
+10	4803
+11	4477
+12	4374
+Time taken: 40.231 seconds, Fetched: 12 row(s)
+
+
+SELECT grav, COUNT(*) AS nb, ROUND(100 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS pct
+FROM usagers GROUP BY grav ORDER BY grav
+Query ID = falek_20261103220257_31056c58-21e6-4ba1-9ced-2c19449e797c
+Total jobs = 3
+Launching Job 1 out of 3
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0024, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0024/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0024
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:03:08,112 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:03:12,193 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.03 sec
+2026-11-03 22:03:17,285 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 3.74 sec
+MapReduce Total cumulative CPU time: 3 seconds 740 msec
+Ended Job = job_1793739054156_0024
+Launching Job 2 out of 3
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0025, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0025/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0025
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:03:27,652 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:03:31,735 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.45 sec
+2026-11-03 22:03:36,822 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 3.53 sec
+MapReduce Total cumulative CPU time: 3 seconds 530 msec
+Ended Job = job_1793739054156_0025
+Launching Job 3 out of 3
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0026, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0026/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0026
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2026-11-03 22:03:48,801 Stage-3 map = 0%,  reduce = 0%
+2026-11-03 22:03:52,886 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.45 sec
+2026-11-03 22:03:57,970 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 2.99 sec
+MapReduce Total cumulative CPU time: 2 seconds 990 msec
+Ended Job = job_1793739054156_0026
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 3.74 sec   HDFS Read: 9439593 HDFS Write: 180 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 3.53 sec   HDFS Read: 10356 HDFS Write: 212 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 2.99 sec   HDFS Read: 8008 HDFS Write: 189 SUCCESS
+Total MapReduce CPU Time Spent: 10 seconds 260 msec
+OK
+grav	nb	pct
+1	52920	42.27
+2	3432	2.74
+3	19126	15.28
+4	49709	39.71
+Time taken: 61.166 seconds, Fetched: 4 row(s)
+
+
+SELECT dep, COUNT(*) AS nb FROM caracteristiques GROUP BY dep ORDER BY nb DESC, dep LIMIT 10
+Query ID = falek_20261103220359_e957da02-947c-4df5-b3f2-30d88b317f30
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0027, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0027/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0027
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:04:09,626 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:04:12,745 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.94 sec
+2026-11-03 22:04:17,826 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 3.47 sec
+MapReduce Total cumulative CPU time: 3 seconds 470 msec
+Ended Job = job_1793739054156_0027
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0028, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0028/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0028
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:04:28,991 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:04:33,077 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.54 sec
+2026-11-03 22:04:38,172 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 3.19 sec
+MapReduce Total cumulative CPU time: 3 seconds 190 msec
+Ended Job = job_1793739054156_0028
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 3.47 sec   HDFS Read: 4907892 HDFS Write: 2510 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 3.19 sec   HDFS Read: 10178 HDFS Write: 287 SUCCESS
+Total MapReduce CPU Time Spent: 6 seconds 660 msec
+OK
+dep	nb
+75	4191
+93	2640
+92	2485
+13	2120
+94	1963
+69	1627
+91	1348
+33	1202
+77	1068
+59	1023
+Time taken: 40.195 seconds, Fetched: 10 row(s)
+
+
+SELECT c.lum, COUNT(*) AS accidents, SUM(COALESCE(k.killed, 0)) AS killed
+FROM caracteristiques c
+LEFT JOIN (SELECT num_acc, COUNT(*) AS killed FROM usagers WHERE grav = 2 GROUP BY num_acc) k
+  ON c.num_acc = k.num_acc
+GROUP BY c.lum ORDER BY c.lum
+Query ID = falek_20261103220439_b98fce63-58bf-4c95-ae42-c5a4708882c9
+Total jobs = 5
+Launching Job 1 out of 5
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0029, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0029/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0029
+Hadoop job information for Stage-4: number of mappers: 1; number of reducers: 1
+2026-11-03 22:04:49,418 Stage-4 map = 0%,  reduce = 0%
+2026-11-03 22:04:53,570 Stage-4 map = 100%,  reduce = 0%, Cumulative CPU 4.0 sec
+2026-11-03 22:04:57,636 Stage-4 map = 100%,  reduce = 100%, Cumulative CPU 6.09 sec
+MapReduce Total cumulative CPU time: 6 seconds 90 msec
+Ended Job = job_1793739054156_0029
+Stage-7 is selected by condition resolver.
+Stage-1 is filtered out by condition resolver.
+SLF4J: Found binding in [jar:file:/home/falek/hive/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/falek/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+2026-11-03 22:05:01	Starting to launch local task to process map join;	maximum memory = 2390753282026-11-03 22:05:02	Dump the side-table for tag: 1 with group count: 3226 into file: file:/tmp/falek/8825909c-a7cb-48d2-978f-1cd8bbf673d6/hive_2026-11-03_22-04-39_232_7196077810575406430-1/-local-10007/HashTable-Stage-5/MapJoin-mapfile01--.hashtable
+2026-11-03 22:05:02	Uploaded 1 File to: file:/tmp/falek/8825909c-a7cb-48d2-978f-1cd8bbf673d6/hive_2026-11-03_22-04-39_232_7196077810575406430-1/-local-10007/HashTable-Stage-5/MapJoin-mapfile01--.hashtable (103995 bytes)
+Execution completed successfully
+MapredLocal task succeeded
+Launching Job 3 out of 5
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793739054156_0030, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0030/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0030
+Hadoop job information for Stage-5: number of mappers: 1; number of reducers: 0
+2026-11-03 22:05:11,395 Stage-5 map = 0%,  reduce = 0%
+2026-11-03 22:05:15,544 Stage-5 map = 100%,  reduce = 0%, Cumulative CPU 2.48 sec
+MapReduce Total cumulative CPU time: 2 seconds 480 msec
+Ended Job = job_1793739054156_0030
+Launching Job 4 out of 5
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0031, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0031/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0031
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:05:26,090 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:05:30,169 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.5 sec
+2026-11-03 22:05:35,254 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 2.97 sec
+MapReduce Total cumulative CPU time: 2 seconds 970 msec
+Ended Job = job_1793739054156_0031
+Launching Job 5 out of 5
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0032, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0032/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0032
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2026-11-03 22:05:46,826 Stage-3 map = 0%,  reduce = 0%
+2026-11-03 22:05:50,906 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.47 sec
+2026-11-03 22:05:56,014 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 3.04 sec
+MapReduce Total cumulative CPU time: 3 seconds 40 msec
+Ended Job = job_1793739054156_0032
+MapReduce Jobs Launched: 
+Stage-Stage-4: Map: 1  Reduce: 1   Cumulative CPU: 6.09 sec   HDFS Read: 9441054 HDFS Write: 100102 SUCCESS
+Stage-Stage-5: Map: 1   Cumulative CPU: 2.48 sec   HDFS Read: 4905188 HDFS Write: 213 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 2.97 sec   HDFS Read: 7335 HDFS Write: 213 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 3.04 sec   HDFS Read: 8087 HDFS Write: 202 SUCCESS
+Total MapReduce CPU Time Spent: 14 seconds 580 msec
+OK
+c.lum	accidents	killed
+1	35580	1933
+2	3599	244
+3	6101	883
+4	623	63
+5	8499	309
+Time taken: 77.837 seconds, Fetched: 5 row(s)
+
+
+SELECT v.catv, COUNT(*) AS killed
+FROM usagers u JOIN vehicules v ON u.id_vehicule = v.id_vehicule
+WHERE u.grav = 2
+GROUP BY v.catv ORDER BY killed DESC, v.catv LIMIT 5
+Query ID = falek_20261103220557_df212c36-8f71-4589-908b-6976ceb8cdf4
+Total jobs = 2
+SLF4J: Found binding in [jar:file:/home/falek/hive/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/falek/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+
+
+2026-11-03 22:06:01	End of local task; Time Taken: 1.388 sec.
+Execution completed successfully
+MapredLocal task succeeded
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0033, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0033/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0033
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:06:08,972 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:06:14,061 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 2.79 sec
+2026-11-03 22:06:18,136 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.74 sec
+MapReduce Total cumulative CPU time: 4 seconds 740 msec
+Ended Job = job_1793739054156_0033
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0034, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0034/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0034
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2026-11-03 22:06:30,570 Stage-3 map = 0%,  reduce = 0%
+2026-11-03 22:06:34,649 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.51 sec
+2026-11-03 22:06:39,739 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 3.12 sec
+MapReduce Total cumulative CPU time: 3 seconds 120 msec
+Ended Job = job_1793739054156_0034
+MapReduce Jobs Launched: 
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.74 sec   HDFS Read: 9445745 HDFS Write: 615 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 3.12 sec   HDFS Read: 8245 HDFS Write: 180 SUCCESS
+Total MapReduce CPU Time Spent: 7 seconds 860 msec
+OK
+v.catv	killed
+7	1898
+33	512
+1	204
+10	196
+2	120
+Time taken: 43.711 seconds, Fetched: 5 row(s)
+
+
+SELECT sexe, ROUND(AVG(2024 - an_nais), 2) AS age_moyen
+FROM usagers
+WHERE grav = 2 AND sexe IN (1, 2) AND an_nais > 0
+GROUP BY sexe ORDER BY sexe
+Query ID = falek_20261103220640_f8f83f2c-b02b-4301-93a5-143f043a0b30
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0035, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0035/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0035
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:06:50,898 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:06:54,978 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.42 sec
+2026-11-03 22:07:00,068 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.61 sec
+MapReduce Total cumulative CPU time: 4 seconds 610 msec
+Ended Job = job_1793739054156_0035
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0036, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0036/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0036
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:07:11,913 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:07:15,997 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.63 sec
+2026-11-03 22:07:21,092 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 3.38 sec
+MapReduce Total cumulative CPU time: 3 seconds 380 msec
+Ended Job = job_1793739054156_0036
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.61 sec   HDFS Read: 9444657 HDFS Write: 148 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 3.38 sec   HDFS Read: 7432 HDFS Write: 127 SUCCESS
+Total MapReduce CPU Time Spent: 7 seconds 990 msec
+OK
+sexe	age_moyen
+1	46.02
+2	54.56
+Time taken: 42.359 seconds, Fetched: 2 row(s)
+
+
+SELECT l.catr, COUNT(*) AS nb_lignes, COUNT(DISTINCT l.num_acc) AS nb_accidents,
+       ROUND(AVG(l.vma), 2) AS vma_moyenne
+FROM caracteristiques c JOIN lieux l ON c.num_acc = l.num_acc
+WHERE l.vma > 0
+GROUP BY l.catr ORDER BY l.catr
+Query ID = falek_20261103220723_8f2db8d1-451d-43df-adcb-4193cce8fb1c
+Total jobs = 2
+SLF4J: Found binding in [jar:file:/home/falek/hive/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/falek/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+2026-11-03 22:07:26	Starting to launch local task to process map join;	maximum memory = 239075328
+2026-11-03 22:07:27	Dump the side-table for tag: 1 with group count: 53662 into file: file:/tmp/falek/8825909c-a7cb-48d2-978f-1cd8bbf673d6/hive_2026-11-03_22-07-23_171_2997151909201981451-1/-local-10006/HashTable-Stage-2/MapJoin-mapfile21--.hashtable
+2026-11-03 22:07:27	End of local task; Time Taken: 1.394 sec.
+Execution completed successfully
+MapredLocal task succeeded
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0037, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0037/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0037
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:07:35,486 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:07:40,578 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 3.75 sec
+2026-11-03 22:07:44,664 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 6.65 sec
+MapReduce Total cumulative CPU time: 6 seconds 650 msec
+Ended Job = job_1793739054156_0037
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0038, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0038/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0038
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2026-11-03 22:07:56,474 Stage-3 map = 0%,  reduce = 0%
+2026-11-03 22:08:00,562 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.42 sec
+2026-11-03 22:08:05,656 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 2.97 sec
+MapReduce Total cumulative CPU time: 2 seconds 970 msec
+Ended Job = job_1793739054156_0038
+MapReduce Jobs Launched: 
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 6.65 sec   HDFS Read: 4908871 HDFS Write: 346 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 2.97 sec   HDFS Read: 8535 HDFS Write: 323 SUCCESS
+Total MapReduce CPU Time Spent: 9 seconds 620 msec
+OK
+l.catr	nb_lignes	nb_accidents	vma_moyenne
+1	5116	5051	96.16
+2	3810	3491	74.93
+3	24361	20230	62.62
+4	30809	22763	43.76
+5	53	49	35.66
+6	405	404	30.43
+7	1866	1484	55.22
+9	197	190	43.21
+Time taken: 44.554 seconds, Fetched: 8 row(s)
+
+
+SELECT COUNT(*) AS nb
+FROM vehicules v LEFT JOIN usagers u ON v.id_vehicule = u.id_vehicule
+WHERE u.id_vehicule IS NULL
+Query ID = falek_20261103220807_d611178e-1325-4df7-927a-cebd465b3619
+Total jobs = 1
+SLF4J: Found binding in [jar:file:/home/falek/hive/lib/log4j-slf4j-impl-2.17.1.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/falek/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+2026-11-03 22:08:11	Starting to launch local task to process map join;	maximum memory = 239075328
+2026-11-03 22:08:12	Uploaded 1 File to: file:/tmp/falek/8825909c-a7cb-48d2-978f-1cd8bbf673d6/hive_2026-11-03_22-08-07_736_8635789048673939761-1/-local-10005/HashTable-Stage-2/MapJoin-mapfile31--.hashtable (3017326 bytes)
+Execution completed successfully
+MapredLocal task succeeded
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0039, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0039/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0039
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2026-11-03 22:08:19,399 Stage-2 map = 0%,  reduce = 0%
+2026-11-03 22:08:23,479 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 2.96 sec
+2026-11-03 22:08:28,566 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.73 sec
+MapReduce Total cumulative CPU time: 4 seconds 730 msec
+Ended Job = job_1793739054156_0039
+MapReduce Jobs Launched: 
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.73 sec   HDFS Read: 4350359 HDFS Write: 102 SUCCESS
+Total MapReduce CPU Time Spent: 4 seconds 730 msec
+OK
+nb
+24
+Time taken: 21.89 seconds, Fetched: 1 row(s)
+
+
+CREATE TABLE usagers_orc STORED AS ORC AS SELECT * FROM usagers
+Query ID = falek_20261103220829_79e0cbee-6086-4f01-9b4a-f99b36b1c059
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1793739054156_0040, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0040/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0040
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2026-11-03 22:08:39,641 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:08:44,729 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 3.37 sec
+MapReduce Total cumulative CPU time: 3 seconds 370 msec
+Ended Job = job_1793739054156_0040
+Stage-4 is selected by condition resolver.
+Stage-3 is filtered out by condition resolver.
+Stage-5 is filtered out by condition resolver.
+Moving data to directory hdfs://localhost:9000/user/hive/warehouse/baac.db/.hive-staging_hive_2026-11-03_22-08-29_637_5474959926440591993-1/-ext-10002
+Moving data to directory hdfs://localhost:9000/user/hive/warehouse/baac.db/usagers_orc
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 3.37 sec   HDFS Read: 9431933 HDFS Write: 1601974 SUCCESS
+Total MapReduce CPU Time Spent: 3 seconds 370 msec
+OK
+usagers.num_acc	usagers.id_usager	usagers.id_vehicule	usagers.num_veh	usagers.place	usagers.catu	usagers.grav	usagers.sexe	usagers.an_nais	usagers.trajet	usagers.secu1	usagers.secu2	usagers.secu3	usagers.locp	usagers.actp	usagers.etatp
+Time taken: 17.445 seconds
+
+SELECT COUNT(*), AVG(2024 - an_nais) FROM usagers
+Query ID = falek_20261103220847_f54ffd5a-4f70-4d24-9002-8aebaab4f436
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0041, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0041/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0041
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:08:56,677 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:09:00,753 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 3.82 sec
+2026-11-03 22:09:05,841 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 6.22 sec
+MapReduce Total cumulative CPU time: 6 seconds 220 msec
+Ended Job = job_1793739054156_0041
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 6.22 sec   HDFS Read: 9443326 HDFS Write: 125 SUCCESS
+Total MapReduce CPU Time Spent: 6 seconds 220 msec
+OK
+_c0	_c1
+125187	38.924588933837924
+Time taken: 19.809 seconds, Fetched: 1 row(s)
+
+SELECT COUNT(*), AVG(2024 - an_nais) FROM usagers_orc
+Query ID = falek_20261103220906_cff76346-8a17-4b59-9de2-ecba90e11c7b
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1793739054156_0042, Tracking URL = http://Glock.localdomain:8088/proxy/application_1793739054156_0042/
+Kill Command = /home/falek/hadoop/bin/mapred job  -kill job_1793739054156_0042
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2026-11-03 22:09:17,140 Stage-1 map = 0%,  reduce = 0%
+2026-11-03 22:09:22,249 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.07 sec
+2026-11-03 22:09:26,367 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.24 sec
+MapReduce Total cumulative CPU time: 4 seconds 240 msec
+Ended Job = job_1793739054156_0042
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.24 sec   HDFS Read: 167101 HDFS Write: 125 SUCCESS
+Total MapReduce CPU Time Spent: 4 seconds 240 msec
+OK
+_c0	_c1
+125187	38.924588933837924
+Time taken: 21.527 seconds, Fetched: 1 row(s)
+
+EXPLAIN SELECT grav, COUNT(*) FROM usagers_orc GROUP BY grav
+OK
+Explain
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Map Reduce
+      Map Operator Tree:
+          TableScan
+            alias: usagers_orc
+            Statistics: Num rows: 125187 Data size: 63334306 Basic stats: COMPLETE Column stats: NONE
+            Select Operator
+              expressions: grav (type: int)
+              outputColumnNames: grav
+              Statistics: Num rows: 125187 Data size: 63334306 Basic stats: COMPLETE Column stats: NONE
+              Group By Operator
+                aggregations: count()
+                keys: grav (type: int)
+                mode: hash
+                outputColumnNames: _col0, _col1
+                Statistics: Num rows: 125187 Data size: 63334306 Basic stats: COMPLETE Column stats: NONE
+                Reduce Output Operator
+                  key expressions: _col0 (type: int)
+                  sort order: +
+                  Map-reduce partition columns: _col0 (type: int)
+                  Statistics: Num rows: 125187 Data size: 63334306 Basic stats: COMPLETE Column stats: NONE
+                  value expressions: _col1 (type: bigint)
+      Execution mode: vectorized
+      Reduce Operator Tree:
+        Group By Operator
+          aggregations: count(VALUE._col0)
+          keys: KEY._col0 (type: int)
+          mode: mergepartial
+          outputColumnNames: _col0, _col1
+          Statistics: Num rows: 62593 Data size: 31666900 Basic stats: COMPLETE Column stats: NONE
+          File Output Operator
+            compressed: false
+            Statistics: Num rows: 62593 Data size: 31666900 Basic stats: COMPLETE Column stats: NONE
+            table:
+                input format: org.apache.hadoop.mapred.SequenceFileInputFormat
+                output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: -1
+      Processor Tree:
+        ListSink
+
+Time taken: 0.096 seconds, Fetched: 49 row(s)
