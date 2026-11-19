@@ -1,0 +1,128 @@
+
+== Partitions
+carac 2
+lieux 2
+vehicules 2
+usagers 2
+
+== Lineage of the pairs
+(2) PythonRDD[12] at RDD at PythonRDD.scala:53 []
+ |  hdfs://localhost:9000/user/falek/accidents/usagers MapPartitionsRDD[10] at textFile at NativeMethodAccessorImpl.java:0 []
+ |  hdfs://localhost:9000/user/falek/accidents/usagers HadoopRDD[9] at textFile at NativeMethodAccessorImpl.java:0 []
+
+== Lineage of Q5
+(4) PythonRDD[24] at RDD at PythonRDD.scala:53 []
+ |  MapPartitionsRDD[23] at mapPartitions at PythonRDD.scala:160 []
+ |  ShuffledRDD[22] at partitionBy at NativeMethodAccessorImpl.java:0 []
+ +-(4) PairwiseRDD[21] at leftOuterJoin at /home/falek/etudes/master/tp-hadoop-spark/spark/mesures.py:55 []
+    |  PythonRDD[20] at leftOuterJoin at /home/falek/etudes/master/tp-hadoop-spark/spark/mesures.py:55 []
+    |  UnionRDD[19] at union at NativeMethodAccessorImpl.java:0 []
+    |  PythonRDD[17] at RDD at PythonRDD.scala:53 []
+    |  hdfs://localhost:9000/user/falek/accidents/caracteristiques MapPartitionsRDD[1] at textFile at NativeMethodAccessorImpl.java:0 []
+    |  hdfs://localhost:9000/user/falek/accidents/caracteristiques HadoopRDD[0] at textFile at NativeMethodAccessorImpl.java:0 []
+    |  PythonRDD[18] at RDD at PythonRDD.scala:53 []
+    |  MapPartitionsRDD[16] at mapPartitions at PythonRDD.scala:160 []
+    |  ShuffledRDD[15] at partitionBy at NativeMethodAccessorImpl.java:0 []
+    +-(2) PairwiseRDD[14] at reduceByKey at /home/falek/etudes/master/tp-hadoop-spark/spark/mesures.py:54 []
+       |  PythonRDD[13] at reduceByKey at /home/falek/etudes/master/tp-hadoop-spark/spark/mesures.py:54 []
+       |  hdfs://localhost:9000/user/falek/accidents/usagers MapPartitionsRDD[10] at textFile at NativeMethodAccessorImpl.java:0 []
+       |  hdfs://localhost:9000/user/falek/accidents/usagers HadoopRDD[9] at textFile at NativeMethodAccessorImpl.java:0 []
+
+== Shuffle write
+reduceByKey bytes: 332
+groupByKey bytes: 1668
+
+== Cache
+first count: 0.279 s
+second count: 0.096 s
+is_cached: True
+
+== repartition and coalesce
+repartition(8): 8
+(8) MapPartitionsRDD[47] at coalesce at NativeMethodAccessorImpl.java:0 []
+ |  CoalescedRDD[46] at coalesce at NativeMethodAccessorImpl.java:0 []
+ |  ShuffledRDD[45] at coalesce at NativeMethodAccessorImpl.java:0 []
+ +-(2) MapPartitionsRDD[44] at coalesce at NativeMethodAccessorImpl.java:0 []
+    |  PythonRDD[43] at RDD at PythonRDD.scala:53 []
+    |  hdfs://localhost:9000/user/falek/accidents/usagers MapPartitionsRDD[10] at textFile at NativeMethodAccessorImpl.java:0 []
+    |  hdfs://localhost:9000/user/falek/accidents/usagers HadoopRDD[9] at textFile at NativeMethodAccessorImpl.java:0 []
+coalesce(1): 1
+(1) CoalescedRDD[49] at coalesce at NativeMethodAccessorImpl.java:0 []
+ |  PythonRDD[35] at RDD at PythonRDD.scala:53 []
+ |  hdfs://localhost:9000/user/falek/accidents/usagers MapPartitionsRDD[10] at textFile at NativeMethodAccessorImpl.java:0 []
+ |  hdfs://localhost:9000/user/falek/accidents/usagers HadoopRDD[9] at textFile at NativeMethodAccessorImpl.java:0 []
+
+== Plan of carac JOIN lieux
+== Parsed Logical Plan ==
+'Aggregate ['catr], ['catr, count(1) AS count#167L]
++- Filter (vma#81 > 0)
+   +- Project [Num_Acc#17L, jour#18, mois#19, an#20, hrmn#21, lum#22, dep#23, com#24, agg#25, int#26, atm#27, col#28, adr#29, lat#30, long#31, catr#65, voie#66, v1#67, v2#68, circ#69, nbv#70, vosp#71, prof#72, pr#73, ... 8 more fields]
+      +- Join Inner, (Num_Acc#17L = Num_Acc#64L)
+         :- Relation [Num_Acc#17L,jour#18,mois#19,an#20,hrmn#21,lum#22,dep#23,com#24,agg#25,int#26,atm#27,col#28,adr#29,lat#30,long#31] csv
+         +- Relation [Num_Acc#64L,catr#65,voie#66,v1#67,v2#68,circ#69,nbv#70,vosp#71,prof#72,pr#73,pr1#74,plan#75,lartpc#76,larrout#77,surf#78,infra#79,situ#80,vma#81] csv
+
+== Analyzed Logical Plan ==
+catr: int, count: bigint
+Aggregate [catr#65], [catr#65, count(1) AS count#167L]
++- Filter (vma#81 > 0)
+   +- Project [Num_Acc#17L, jour#18, mois#19, an#20, hrmn#21, lum#22, dep#23, com#24, agg#25, int#26, atm#27, col#28, adr#29, lat#30, long#31, catr#65, voie#66, v1#67, v2#68, circ#69, nbv#70, vosp#71, prof#72, pr#73, ... 8 more fields]
+      +- Join Inner, (Num_Acc#17L = Num_Acc#64L)
+         :- Relation [Num_Acc#17L,jour#18,mois#19,an#20,hrmn#21,lum#22,dep#23,com#24,agg#25,int#26,atm#27,col#28,adr#29,lat#30,long#31] csv
+         +- Relation [Num_Acc#64L,catr#65,voie#66,v1#67,v2#68,circ#69,nbv#70,vosp#71,prof#72,pr#73,pr1#74,plan#75,lartpc#76,larrout#77,surf#78,infra#79,situ#80,vma#81] csv
+
+== Optimized Logical Plan ==
+Aggregate [catr#65], [catr#65, count(1) AS count#167L]
++- Project [catr#65]
+   +- Join Inner, (Num_Acc#17L = Num_Acc#64L)
+      :- Project [Num_Acc#17L]
+      :  +- Filter isnotnull(Num_Acc#17L)
+      :     +- Relation [Num_Acc#17L,jour#18,mois#19,an#20,hrmn#21,lum#22,dep#23,com#24,agg#25,int#26,atm#27,col#28,adr#29,lat#30,long#31] csv
+      +- Project [Num_Acc#64L, catr#65]
+         +- Filter ((isnotnull(vma#81) AND (vma#81 > 0)) AND isnotnull(Num_Acc#64L))
+            +- Relation [Num_Acc#64L,catr#65,voie#66,v1#67,v2#68,circ#69,nbv#70,vosp#71,prof#72,pr#73,pr1#74,plan#75,lartpc#76,larrout#77,surf#78,infra#79,situ#80,vma#81] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[catr#65], functions=[count(1)], output=[catr#65, count#167L])
+   +- Exchange hashpartitioning(catr#65, 200), ENSURE_REQUIREMENTS, [plan_id=78]
+      +- HashAggregate(keys=[catr#65], functions=[partial_count(1)], output=[catr#65, count#171L])
+         +- Project [catr#65]
+            +- BroadcastHashJoin [Num_Acc#17L], [Num_Acc#64L], Inner, BuildRight, false
+               :- Filter isnotnull(Num_Acc#17L)
+               :  +- FileScan csv [Num_Acc#17L] Batched: false, DataFilters: [isnotnull(Num_Acc#17L)], Format: CSV, Location: InMemoryFileIndex(1 paths)[hdfs://localhost:9000/user/falek/accidents/caracteristiques], PartitionFilters: [], PushedFilters: [IsNotNull(Num_Acc)], ReadSchema: struct<Num_Acc:bigint>
+               +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]),false), [plan_id=73]
+                  +- Project [Num_Acc#64L, catr#65]
+                     +- Filter ((isnotnull(vma#81) AND (vma#81 > 0)) AND isnotnull(Num_Acc#64L))
+                        +- FileScan csv [Num_Acc#64L,catr#65,vma#81] Batched: false, DataFilters: [isnotnull(vma#81), (vma#81 > 0), isnotnull(Num_Acc#64L)], Format: CSV, Location: InMemoryFileIndex(1 paths)[hdfs://localhost:9000/user/falek/accidents/lieux], PartitionFilters: [], PushedFilters: [IsNotNull(vma), GreaterThan(vma,0), IsNotNull(Num_Acc)], ReadSchema: struct<Num_Acc:bigint,catr:int,vma:int>
+
++----+-----+
+|catr|count|
++----+-----+
+|   1| 5116|
+|   6|  405|
+|   3|24361|
+|   5|   53|
+|   9|  197|
+|   4|30809|
+|   7| 1866|
+|   2| 3810|
++----+-----+
+
+
+== Parquet
+group by grav on CSV: 0.328 s
+group by grav on Parquet: 0.265 s
++----+-----+
+|grav|count|
++----+-----+
+|   1|52920|
+|   2| 3432|
+|   3|19126|
+|   4|49709|
++----+-----+
+
+== Physical Plan ==
+*(1) ColumnarToRow
++- FileScan parquet [grav#272] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[hdfs://localhost:9000/user/falek/accidents_parquet/usagers], PartitionFilters: [], PushedFilters: [], ReadSchema: struct<grav:int>
+
+

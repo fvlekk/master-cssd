@@ -1,0 +1,23 @@
+hdfs dfs -mkdir -p /user/falek/accidents/caracteristiques
+hdfs dfs -put -f /home/falek/data/clean/caracteristiques-2024.csv /user/falek/accidents/caracteristiques/
+hdfs dfs -mkdir -p /user/falek/accidents/lieux
+hdfs dfs -put -f /home/falek/data/clean/lieux-2024.csv /user/falek/accidents/lieux/
+hdfs dfs -mkdir -p /user/falek/accidents/vehicules
+hdfs dfs -put -f /home/falek/data/clean/vehicules-2024.csv /user/falek/accidents/vehicules/
+hdfs dfs -mkdir -p /user/falek/accidents/usagers
+hdfs dfs -put -f /home/falek/data/clean/usagers-2024.csv /user/falek/accidents/usagers/
+hdfs dfs -ls -R /user/falek/accidents
+hdfs dfs -ls -h /user/falek/accidents/usagers
+hdfs dfs -du -h /user/falek/accidents
+hdfs dfs -count /user/falek/accidents
+hdfs dfs -cat /user/falek/accidents/usagers/usagers-2024.csv | head -5
+hdfs dfs -tail /user/falek/accidents/usagers/usagers-2024.csv | tail -2
+hdfs dfs -stat %n %b octets, taille de bloc %o, replication %r /user/falek/accidents/usagers/usagers-2024.csv
+hdfs dfsadmin -report
+hdfs dfs -D dfs.blocksize=1048576 -put -f /home/falek/data/clean/usagers-2024.csv /user/falek/usagers_small_blocks.csv
+hdfs dfs -cp -f /user/falek/usagers_small_blocks.csv /user/falek/usagers_copy.csv
+hdfs dfs -mv /user/falek/usagers_copy.csv /user/falek/accidents/usagers_backup.csv
+hdfs dfs -get -f /user/falek/accidents/usagers_backup.csv /home/falek/usagers_from_hdfs.csv
+hdfs dfs -rm /user/falek/accidents/usagers_backup.csv
+hdfs dfs -rm /user/falek/usagers_small_blocks.csv
+hdfs dfs -getmerge /user/falek/accidents/lieux /tmp/lieux_merged.csv

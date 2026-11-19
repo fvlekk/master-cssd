@@ -1,0 +1,22 @@
+### local[2]
+master=local[2] lines=125188 count_seconds=1.37 app=local-1793741114010
+### YARN SparkPi
+Pi is roughly 3.1408487140848713
+application_1793741101876_0001
+container_1793741101876_0001_01_000001
+container_1793741101876_0001_01_000002
+container_1793741101876_0001_01_000003
+container_1793741101876_0001_01_000001: 2 am-log, 1 executor-lines
+container_1793741101876_0001_01_000002: 0 am-log, 53 executor-lines
+container_1793741101876_0001_01_000003: 0 am-log, 55 executor-lines
+### YARN count
+master=yarn lines=125188 count_seconds=2.19 app=application_1793741101876_0002
+### Standalone master
+{'url': 'spark://localhost:7077', 'aliveworkers': 1, 'cores': 2, 'memory': 2048, 'status': 'ALIVE'}
+Pi is roughly 3.1416575141657512
+[('Spark Pi', 'FINISHED', 2, 1024)]
+/home/falek/spark/work/app-20261103222639-0000/0
+### Standalone count
+master=spark://localhost:7077 lines=125188 count_seconds=2.57 app=app-20261103222646-0001
+### Two apps without spark.cores.max
+[('NB1', 'RUNNING', 'cores', 2), ('NB2', 'WAITING', 'cores', 0)]

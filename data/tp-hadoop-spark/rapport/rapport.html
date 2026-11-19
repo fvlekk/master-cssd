@@ -1,0 +1,145 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Rapport TP Hadoop et Spark</title>
+<style>
+@page{size:A4;margin:18mm 17mm}
+body{font:10.5pt/1.45 Arial,sans-serif;color:#1c1c1c}
+h1{font-size:18pt;margin:0 0 3pt}.sub{color:#555;margin:0 0 12pt}
+h2{font-size:13pt;margin:18pt 0 7pt;padding-bottom:2pt;border-bottom:1.5px solid #333;break-after:avoid}
+h3{font-size:10.5pt;margin:10pt 0 3pt;break-after:avoid}
+p{margin:0 0 5pt}.q{font-weight:bold;margin:9pt 0 2pt;break-after:avoid}
+table{border-collapse:collapse;width:100%;margin:4pt 0 9pt;font-size:9.5pt;break-inside:avoid}
+th,td{border:1px solid #aaa;padding:3pt 6pt;text-align:left;vertical-align:top}th{background:#eee}
+td.n,th.n{text-align:right}code{font:9pt Consolas,monospace;background:#f2f2f2;padding:0 2pt}
+figure{margin:6pt 0 10pt;break-inside:avoid}img{display:block;max-width:100%;max-height:72mm;border:1px solid #bbb;margin:0 auto}
+figcaption{font-size:9pt;color:#555;margin-top:2pt;text-align:center}ul{margin:2pt 0 6pt;padding-left:17pt}
+</style></head><body>
+<h1>TP Hadoop et Spark : accidents de la route en France</h1>
+<p class="sub">Falek SEHILI. M1 Cybersécurité et Sciences des Données, Conférence industrielle (I. Zeroual), 2026/2027.</p>
+
+<h2>Adaptations par rapport au sujet</h2>
+<table><tr><th>Adaptation</th><th>Raison</th></tr>
+<tr><td>Hadoop 3.4.3 au lieu de 3.5.0</td><td>Hadoop 3.5.0 demande Java 17, alors que la commande <code>hive</code> 3.1.3 échoue sous Java 17.</td></tr>
+<tr><td>CSV nettoyés avant HDFS</td><td>Les fichiers bruts contiennent des guillemets, des espaces et des <code>;</code> dans 3 adresses, ce qui fausse la lecture des colonnes. Aucun enregistrement n'est perdu.</td></tr>
+<tr><td><code>commons-collections</code> ajouté à Hive</td><td>Hive 3.1.3 en a besoin et Hadoop 3.4.3 ne le fournit plus.</td></tr>
+<tr><td><code>spark.locality.wait 0</code></td><td>Sans ce réglage, la Q5 en RDD restait bloquée en <code>local[2]</code>.</td></tr>
+<tr><td>Mémoire limitée</td><td>YARN à 3 Go et conteneurs MapReduce à 512 Mo : la machine n'a que 7,7 Go.</td></tr></table>
+
+<h2>Partie 1 : Hadoop</h2>
+<p><code>jps</code> affiche les 5 démons attendus. Le job <code>pi 2 10</code> réussit en 16,7 s et donne 3,8 (valeur approchée, avec peu de tirages).</p>
+<p class="q">1. Quel processus est maître pour le stockage, et lequel pour le calcul ?</p>
+<p>Le <b>NameNode</b> pour le stockage, le <b>ResourceManager</b> pour le calcul.</p>
+<p class="q">2. Pourquoi dfs.replication vaut-il 1, et quelle est sa valeur dans un vrai cluster ?</p>
+<p>Il n'y a qu'un seul DataNode, donc une deuxième copie n'aurait nulle part où aller. Dans un vrai cluster, la valeur par défaut est <b>3</b>.</p>
+<p class="q">3. Capture du NameNode montrant le DataNode actif</p>
+<figure><img src="captures/namenode_datanode.png"><figcaption>Interface du NameNode : un DataNode actif.</figcaption></figure>
+
+<h2>Partie 2 : HDFS</h2>
+<p class="q">1. Taille et nombre de blocs des fichiers dans HDFS</p>
+<table><tr><th>Fichier</th><th class="n">Octets</th><th class="n">Blocs</th><th class="n">Enregistrements</th></tr>
+<tr><td>caracteristiques</td><td class="n">4 893 792</td><td class="n">1</td><td class="n">54 402</td></tr>
+<tr><td>lieux</td><td class="n">4 403 482</td><td class="n">1</td><td class="n">70 248</td></tr>
+<tr><td>vehicules</td><td class="n">4 330 582</td><td class="n">1</td><td class="n">92 678</td></tr>
+<tr><td>usagers</td><td class="n">9 425 214</td><td class="n">1</td><td class="n">125 187</td></tr></table>
+<p class="q">2. Combien de blocs pour usagers avec des blocs de 1 Mo ?</p>
+<p><code>fsck</code> signale <b>9 blocs</b>. Le calcul concorde : 9 425 214 / 1 048 576 = 8,99, arrondi à 9.</p>
+<p class="q">3. Que fait hdfs dfs -getmerge ?</p>
+<p>Il concatène tous les fichiers d'un répertoire HDFS dans un seul fichier local. Pour <code>lieux</code>, le fichier obtenu fait 70 249 lignes, en-tête compris.</p>
+<p class="q">4. Pourquoi le NameNode ne stocke-t-il pas le contenu, et où est la liste des blocs ?</p>
+<p>Le NameNode ne garde que les métadonnées pour rester rapide, le contenu étant réparti sur les DataNodes. La liste des blocs de chaque fichier est conservée par le NameNode, en mémoire et sur disque (<code>fsimage</code> et <code>edits</code>).</p>
+<p class="q">5. Capture du répertoire accidents</p>
+<figure><img src="captures/hdfs_browse_accidents.png"><figcaption>Répertoire <code>accidents</code> dans HDFS.</figcaption></figure>
+
+<h2>Partie 3 : Hive</h2>
+<p class="q">1. Table externe ou gérée, et effet de DROP TABLE usagers ?</p>
+<p>Une table gérée appartient à Hive : la supprimer efface aussi ses fichiers. Une table externe décrit des fichiers existants : <code>DROP TABLE usagers;</code> efface la définition, et <b>les fichiers restent dans HDFS</b>.</p>
+<p class="q">2. Quel moteur d'exécution, et comment un GROUP BY correspond-il à map, shuffle et reduce ?</p>
+<p>Le moteur est <b>MapReduce</b>. Le map émet une paire (clé, valeur) par ligne, le shuffle regroupe les paires par clé, et le reduce calcule l'agrégat de chaque clé.</p>
+<p class="q">3. De combien ORC est-il plus petit, et pourquoi est-il plus rapide à parcourir ?</p>
+<p>ORC est <b>83,0 % plus petit</b> : 1 601 892 octets contre 9 425 214. Il est plus rapide en principe, car il ne lit que les colonnes utiles, déjà compressées.</p>
+<p>Ce gain n'apparaît pas dans ma mesure : 21,5 s en ORC contre 19,8 s en CSV. Sur un si petit fichier, le temps est surtout celui du lancement des jobs MapReduce.</p>
+<p class="q">4. Résultats et durées de Q1 à Q9</p>
+<p>Voir le tableau suivant, commun à Hive, RDD, DataFrame et SQL.</p>
+
+<h2>Résultats de Q1 à Q9</h2>
+<p><b>Hive, RDD, DataFrame et Spark SQL donnent les mêmes résultats pour les 9 questions.</b></p>
+<table><tr><th style="width:7%">Q</th><th>Résultat</th></tr>
+<tr><td>Q1</td><td>54 402 accidents, 92 678 véhicules, 125 187 usagers</td></tr>
+<tr><td>Q2</td><td>Accidents par mois : janv. 4069, févr. 3792, mars 4370, avr. 4586, mai 4517, juin 5135, juil. 5209, août 4450, sept. 4620, oct. 4803, nov. 4477, déc. 4374</td></tr>
+<tr><td>Q3</td><td>Indemnes 52 920 (42,27 %), tués 3 432 (2,74 %), hospitalisés 19 126 (15,28 %), blessés légers 49 709 (39,71 %)</td></tr>
+<tr><td>Q4</td><td>Départements : 75 (4191), 93 (2640), 92 (2485), 13 (2120), 94 (1963), 69 (1627), 91 (1348), 33 (1202), 77 (1068), 59 (1023)</td></tr>
+<tr><td>Q6</td><td>Véhicule léger 1898, moto &gt; 125 cm³ 512, bicyclette 204, véhicule utilitaire 196, cyclomoteur 120</td></tr>
+<tr><td>Q7</td><td>Âge moyen des personnes tuées : hommes 46,02 ans, femmes 54,56 ans</td></tr>
+<tr><td>Q9</td><td>24 véhicules sans usager, comme annoncé par l'ONISR</td></tr></table>
+<h3>Q5 : accidents et personnes tuées selon la lumière</h3>
+<table><tr><th>Lumière</th><th class="n">Accidents</th><th class="n">Tués</th></tr>
+<tr><td>Plein jour</td><td class="n">35 580</td><td class="n">1933</td></tr>
+<tr><td>Crépuscule ou aube</td><td class="n">3 599</td><td class="n">244</td></tr>
+<tr><td>Nuit sans éclairage public</td><td class="n">6 101</td><td class="n">883</td></tr>
+<tr><td>Nuit, éclairage non allumé</td><td class="n">623</td><td class="n">63</td></tr>
+<tr><td>Nuit, éclairage allumé</td><td class="n">8 499</td><td class="n">309</td></tr></table>
+<h3>Q8 : accidents et vitesse maximale moyenne par catégorie de route</h3>
+<table><tr><th>Route</th><th class="n">Accidents</th><th class="n">Lignes de lieux</th><th class="n">vma moyenne</th></tr>
+<tr><td>1 Autoroute</td><td class="n">5 051</td><td class="n">5 116</td><td class="n">96,16</td></tr>
+<tr><td>2 Route nationale</td><td class="n">3 491</td><td class="n">3 810</td><td class="n">74,93</td></tr>
+<tr><td>3 Route départementale</td><td class="n">20 230</td><td class="n">24 361</td><td class="n">62,62</td></tr>
+<tr><td>4 Voie communale</td><td class="n">22 763</td><td class="n">30 809</td><td class="n">43,76</td></tr>
+<tr><td>5 Hors réseau public</td><td class="n">49</td><td class="n">53</td><td class="n">35,66</td></tr>
+<tr><td>6 Parking</td><td class="n">404</td><td class="n">405</td><td class="n">30,43</td></tr>
+<tr><td>7 Route de métropole urbaine</td><td class="n">1 484</td><td class="n">1 866</td><td class="n">55,22</td></tr>
+<tr><td>9 Autre</td><td class="n">190</td><td class="n">197</td><td class="n">43,21</td></tr></table>
+<p>Un accident peut avoir plusieurs lignes dans <code>lieux</code>, d'où les deux comptes. La moyenne inclut 28 lignes aux valeurs aberrantes (300 à 900), présentes dans les données.</p>
+<h3>Durée de chaque requête (secondes)</h3>
+<table><tr><th>Moteur</th><th class="n">Q1</th><th class="n">Q2</th><th class="n">Q3</th><th class="n">Q4</th><th class="n">Q5</th><th class="n">Q6</th><th class="n">Q7</th><th class="n">Q8</th><th class="n">Q9</th></tr>
+<tr><td>Hive</td><td class="n">75,53</td><td class="n">40,23</td><td class="n">61,17</td><td class="n">40,20</td><td class="n">77,84</td><td class="n">43,71</td><td class="n">42,36</td><td class="n">44,55</td><td class="n">21,89</td></tr>
+<tr><td>RDD</td><td class="n">1,18</td><td class="n">0,45</td><td class="n">0,51</td><td class="n">0,16</td><td class="n">1,04</td><td class="n">0,71</td><td class="n">0,38</td><td class="n">1,76</td><td class="n">0,91</td></tr>
+<tr><td>DataFrame</td><td class="n">2,13</td><td class="n">0,47</td><td class="n">0,40</td><td class="n">0,28</td><td class="n">0,87</td><td class="n">0,48</td><td class="n">0,34</td><td class="n">0,62</td><td class="n">0,44</td></tr>
+<tr><td>Spark SQL</td><td class="n">0,26</td><td class="n">0,24</td><td class="n">0,41</td><td class="n">0,16</td><td class="n">0,44</td><td class="n">0,35</td><td class="n">0,28</td><td class="n">0,48</td><td class="n">0,31</td></tr></table>
+<p>Une seule exécution par mesure. Hive tourne sur YARN et Spark en <code>local[2]</code> : l'écart vient surtout du coût de lancement de MapReduce. Spark SQL passe après le DataFrame dans le même programme, sa JVM est déjà chaude : cela ne prouve pas qu'il est plus rapide.</p>
+
+<h2>Partie 4 : Spark et les modes de cluster</h2>
+<table><tr><th>Mode</th><th>Qui alloue les ressources</th><th>Où voir l'application</th><th class="n">count() (s)</th></tr>
+<tr><td>local[2]</td><td>Personne : 2 threads dans le driver</td><td>Port 4040</td><td class="n">1,37</td></tr>
+<tr><td>Standalone</td><td>Le Master Spark</td><td>Ports 8080 et 4040</td><td class="n">2,57</td></tr>
+<tr><td>YARN</td><td>Le ResourceManager</td><td>Ports 8088 et 4040</td><td class="n">2,19</td></tr></table>
+<p class="q">Combien de conteneurs pour Spark Pi sous YARN, et lequel héberge le driver en mode client ?</p>
+<p><b>3 conteneurs</b> : 1 ApplicationMaster et 2 executors. <b>Aucun n'héberge le driver</b> : en mode client, il reste dans le processus <code>spark-submit</code>.</p>
+<p class="q">À quoi correspondent les composants de l'architecture Spark ?</p>
+<p>Le driver est le processus <code>spark-submit</code>, le gestionnaire de cluster est le ResourceManager, et les executors sont les deux conteneurs restants.</p>
+<p class="q">Que change .master("yarn") par rapport à .master("local[2]") ?</p>
+<p>En <code>local[2]</code>, le driver et les tâches tournent dans le même processus. Avec <code>yarn</code>, le driver reste dans le notebook et les executors tournent dans des conteneurs YARN.</p>
+<p class="q">Que relève-t-on sur l'interface du Master Standalone ?</p>
+<p>URL <code>spark://localhost:7077</code>, 1 worker, 2 cœurs et 2 Go. Spark Pi a utilisé <b>1 executor</b>.</p>
+<p class="q">Deux notebooks sans spark.cores.max : que devient le second ?</p>
+<p>Il reste en <b>WAITING avec 0 cœur</b>, car le premier a pris les 2 cœurs disponibles. C'est ce que montre la capture ci-dessous.</p>
+<figure><img src="captures/spark_ui_count_job.png"><figcaption>Interface Spark (port 4040) : job du <code>count()</code> du notebook terminé.</figcaption></figure>
+<figure><img src="captures/yarn_applications.png"><figcaption>Interface YARN : Spark Pi et TP-BAAC.</figcaption></figure>
+<figure><img src="captures/spark_master_standalone.png"><figcaption>Master Standalone : NB1 en RUNNING avec 2 cœurs, NB2 en WAITING avec 0 cœur.</figcaption></figure>
+
+<h2>Partie 5 : RDD</h2>
+<p class="q">1. Combien de partitions chaque RDD a-t-il, et pourquoi ?</p>
+<p><b>2 partitions</b>. Chaque fichier tient dans 1 bloc, mais <code>textFile</code> en demande au moins 2 par défaut.</p>
+<p class="q">2. Pourquoi préférer reduceByKey à groupByKey ?</p>
+<p><code>reduceByKey</code> agrège dans chaque partition avant d'envoyer, donc il transfère moins de données. Shuffle Write mesuré : <b>332 octets contre 1668 octets</b> pour <code>groupByKey</code>.</p>
+<p class="q">3. Quelle opération de Q5 a créé une frontière de stage ?</p>
+<p><code>reduceByKey</code> et <code>leftOuterJoin</code>, car elles déclenchent un shuffle.</p>
+<p class="q">4. Quelles transformations de Q5 sont étroites, et lesquelles sont larges ?</p>
+<p>Étroites : <code>map</code>, <code>filter</code>. Larges : <code>reduceByKey</code>, <code>leftOuterJoin</code>, <code>sortByKey</code>.</p>
+<h3>Cache et partitionnement (5.5)</h3>
+<ul><li><b>Cache :</b> 0,279 s au premier <code>count()</code>, 0,096 s au second, lu en mémoire.</li>
+<li><b>Shuffle :</b> <code>repartition(8)</code> en déclenche un, <code>coalesce(1)</code> n'en déclenche pas.</li></ul>
+
+<h2>Partie 6 : DataFrames et Spark SQL</h2>
+<h3>Comparaison sur Q5 (6.6)</h3>
+<table><tr><th>Critère</th><th>Hive</th><th>RDD</th><th>DataFrame</th></tr>
+<tr><td>Lignes de code</td><td>5</td><td>5</td><td>4</td></tr>
+<tr><td>Durée (s)</td><td>77,84</td><td>1,04</td><td>0,87</td></tr>
+<tr><td>Schéma connu du moteur</td><td>Oui (métastore)</td><td>Non</td><td>Oui</td></tr>
+<tr><td>Optimisation automatique</td><td>Partielle (map join)</td><td>Non</td><td>Oui (Catalyst)</td></tr></table>
+<p class="q">1. Les résultats sont-ils identiques pour Q1 à Q9 ?</p>
+<p><b>Oui</b>, une fois les CSV nettoyés. <code>Num_Acc</code> est un nombre en DataFrame et un texte en Hive et en RDD, sans effet sur les résultats.</p>
+<p class="q">2. Quelle stratégie de jointure, et pourquoi éviter un shuffle pour la petite table ?</p>
+<p>Spark utilise un <b>BroadcastHashJoin</b>. La table <code>lieux</code> filtrée est sous le seuil de 10 Mo : elle est copiée sur chaque executor, donc il n'est pas nécessaire de redistribuer les lignes par clé. Le seul <code>Exchange</code> de shuffle restant sert au <code>groupBy</code>.</p>
+<p class="q">3. De combien Parquet est-il plus petit, et que change le stockage en colonnes ?</p>
+<p>Parquet est <b>76,7 % plus petit</b> : 2 195 523 octets contre 9 425 214. Une requête sur <code>grav</code> ne lit que cette colonne, comme le montre le plan (<code>FileScan parquet [grav]</code>). Durée mesurée : 0,265 s contre 0,328 s en CSV.</p>
+<p class="q">4. Quand choisir encore un RDD plutôt qu'un DataFrame ?</p>
+<p>Pour des données non structurées, comme du texte ou des logs irréguliers, ou pour un traitement difficile à exprimer en colonnes.</p>
+</body></html>

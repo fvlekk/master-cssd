@@ -1,0 +1,13 @@
+$ jps
+DataNode
+NameNode
+NodeManager
+ResourceManager
+SecondaryNameNode
+
+$ hadoop version
+Hadoop 3.4.3
+
+$ hadoop jar hadoop-mapreduce-examples-3.4.3.jar pi 2 10
+Job Finished in 16.748 seconds
+Estimated value of Pi is 3.80000000000000000000

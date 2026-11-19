@@ -1,0 +1,3 @@
+[submodule "machine-learning/projet-fraude-faux-conseiller"]
+	path = machine-learning/projet-fraude-faux-conseiller
+	url = https://github.com/fvlekk/detection-faux-conseiller.git

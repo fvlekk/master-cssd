@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methode du simplexe</title>
+<style>
+  :root {
+    --fond: #f6f7f9;
+    --carte: #ffffff;
+    --bord: #dfe3e8;
+    --texte: #1c2024;
+    --doux: #6b7280;
+    --accent: #2563eb;
+    --accent-doux: #eff4ff;
+    --pivot: #fde68a;
+    --ok: #15803d;
+    --erreur: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 64px;
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fond); color: var(--texte);
+  }
+  .page { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sous-titre { color: var(--doux); margin: 0 0 24px; }
+  .carte {
+    background: var(--carte); border: 1px solid var(--bord);
+    border-radius: 10px; padding: 20px; margin-bottom: 20px;
+  }
+  .carte h2 { font-size: 16px; margin: 0 0 16px; }
+  .reglages { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+  .champ { display: flex; flex-direction: column; gap: 6px; }
+  .champ label { font-size: 13px; color: var(--doux); }
+  select, input {
+    font: inherit; padding: 7px 10px;
+    border: 1px solid var(--bord); border-radius: 6px; background: #fff; color: inherit;
+  }
+  input[type=number] { width: 84px; }
+  .saisie input { width: 68px; text-align: center; }
+  button {
+    font: inherit; font-weight: 500; padding: 9px 18px; border-radius: 6px;
+    border: 1px solid var(--bord); background: #fff; color: inherit; cursor: pointer;
+  }
+  button.principal { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .boutons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .ligne-saisie { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ligne-saisie .etiquette { min-width: 104px; color: var(--doux); font-size: 13px; }
+  .var { color: var(--doux); margin-right: 10px; }
+  .sens { font-weight: 600; margin: 0 4px; }
+  .defile { overflow-x: auto; }
+  table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+  th, td { border: 1px solid var(--bord); padding: 6px 12px; text-align: right; }
+  th { background: var(--accent-doux); font-weight: 600; }
+  td.base, th.base { text-align: left; background: var(--accent-doux); font-weight: 600; }
+  tr.objectif td { border-top: 2px solid var(--texte); }
+  td.pivot { background: var(--pivot); font-weight: 700; }
+  .etape { margin-bottom: 22px; }
+  .etape h3 { font-size: 14px; margin: 0 0 8px; }
+  .etape .note { font-size: 13px; color: var(--doux); margin: 8px 0 0; }
+  .resultat-cle { font-size: 22px; font-weight: 600; margin: 0 0 14px; }
+  .resultat-cle.ok { color: var(--ok); }
+  .resultat-cle.erreur { color: var(--erreur); }
+  .sol { margin: 0 0 10px; }
+  .sol .titre { font-size: 13px; color: var(--doux); margin-bottom: 4px; }
+  .pastille {
+    display: inline-block; background: var(--accent-doux); border: 1px solid var(--bord);
+    border-radius: 5px; padding: 3px 10px; margin: 0 6px 6px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .encart {
+    background: var(--accent-doux); border: 1px solid var(--bord);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; font-size: 14px;
+  }
+  .encart p { margin: 0 0 6px; }
+  .encart .formule { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  .cache { display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Methode du simplexe</h1>
+  <p class="sous-titre">Resolution d'un programme lineaire &mdash; moteur de calcul ecrit en C++, compile en WebAssembly.</p>
+
+  <div class="carte">
+    <h2>1. Parametres du probleme</h2>
+    <div class="reglages">
+      <div class="champ">
+        <label for="type">Type</label>
+        <select id="type">
+          <option value="1">Maximiser &mdash; contraintes &le;</option>
+          <option value="2">Minimiser &mdash; contraintes &ge;</option>
+        </select>
+      </div>
+      <div class="champ">
+        <label for="nbVar">Variables</label>
+        <input type="number" id="nbVar" min="1" max="12" value="2">
+      </div>
+      <div class="champ">
+        <label for="nbCont">Contraintes</label>
+        <input type="number" id="nbCont" min="1" max="12" value="3">
+      </div>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>2. Coefficients</h2>
+    <div id="grille"></div>
+    <div class="boutons">
+      <button class="principal" id="btnResoudre" disabled>Resoudre</button>
+      <button id="btnExemple">Charger un exemple</button>
+      <button id="btnVider">Tout effacer</button>
+    </div>
+  </div>
+
+  <div class="carte cache" id="carteResultat">
+    <h2>3. Resultat</h2>
+    <div id="resultat"></div>
+  </div>
+
+  <div class="carte cache" id="carteEtapes">
+    <h2>4. Deroulement des iterations</h2>
+    <div id="etapes"></div>
+  </div>
+
+</div>
+
+<script src="simplex.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var Module = null;
+  var resoudreTexte = null;
+
+  var elType   = document.getElementById("type");
+  var elNbVar  = document.getElementById("nbVar");
+  var elNbCont = document.getElementById("nbCont");
+  var elGrille = document.getElementById("grille");
+
+  // --- construction de la grille de saisie ---------------------------------
+  function sensCourant() { return elType.value === "2" ? "≥" : "≤"; }
+
+  function champNombre(id) {
+    var i = document.createElement("input");
+    i.type = "number"; i.step = "any"; i.id = id; i.placeholder = "0";
+    return i;
+  }
+
+  function construireGrille() {
+    var n = Math.max(1, Math.min(12, parseInt(elNbVar.value, 10) || 1));
+    var m = Math.max(1, Math.min(12, parseInt(elNbCont.value, 10) || 1));
+    var anciennes = {};
+    elGrille.querySelectorAll("input").forEach(function (i) { anciennes[i.id] = i.value; });
+
+    elGrille.innerHTML = "";
+    var sens = sensCourant();
+
+    // ligne de l'objectif
+    var ligneObj = document.createElement("div");
+    ligneObj.className = "ligne-saisie saisie";
+    var eti = document.createElement("span");
+    eti.className = "etiquette";
+    eti.textContent = elType.value === "2" ? "Minimiser f =" : "Maximiser f =";
+    ligneObj.appendChild(eti);
+    for (var j = 0; j < n; j++) {
+      ligneObj.appendChild(champNombre("c" + j));
+      var v = document.createElement("span");
+      v.className = "var";
+      v.textContent = "x" + (j + 1) + (j < n - 1 ? "  +" : "");
+      ligneObj.appendChild(v);
+    }
+    elGrille.appendChild(ligneObj);
+
+    // lignes des contraintes
+    for (var i = 0; i < m; i++) {
+      var ligne = document.createElement("div");
+      ligne.className = "ligne-saisie saisie";
+      var e = document.createElement("span");
+      e.className = "etiquette";
+      e.textContent = "Contrainte " + (i + 1);
+      ligne.appendChild(e);
+      for (var k = 0; k < n; k++) {
+        ligne.appendChild(champNombre("a" + i + "_" + k));
+        var vv = document.createElement("span");
+        vv.className = "var";
+        vv.textContent = "x" + (k + 1) + (k < n - 1 ? "  +" : "");
+        ligne.appendChild(vv);
+      }
+      var s = document.createElement("span");
+      s.className = "sens";
+      s.textContent = sens;
+      ligne.appendChild(s);
+      ligne.appendChild(champNombre("b" + i));
+      elGrille.appendChild(ligne);
+    }
+
+    // on restitue les valeurs deja saisies
+    elGrille.querySelectorAll("input").forEach(function (i) {
+      if (anciennes[i.id] !== undefined) i.value = anciennes[i.id];
+    });
+  }
+
+  function valeur(id) {
+    var el = document.getElementById(id);
+    if (!el || el.value.trim() === "") return 0;
+    var v = parseFloat(el.value);
+    return isFinite(v) ? v : 0;
+  }
+
+  // --- format texte attendu par le moteur C++ ------------------------------
+  function assemblerEntree() {
+    var n = Math.max(1, parseInt(elNbVar.value, 10) || 1);
+    var m = Math.max(1, parseInt(elNbCont.value, 10) || 1);
+    var lignes = [elType.value, n + " " + m];
+
+    var c = [];
+    for (var j = 0; j < n; j++) c.push(valeur("c" + j));
+    lignes.push(c.join(" "));
+
+    for (var i = 0; i < m; i++) {
+      var l = [];
+      for (var k = 0; k < n; k++) l.push(valeur("a" + i + "_" + k));
+      l.push(valeur("b" + i));
+      lignes.push(l.join(" "));
+    }
+    return lignes.join("\n") + "\n";
+  }
+
+  // --- affichage -----------------------------------------------------------
+  function fmt(x) {
+    if (Math.abs(x) < 1e-9) return "0";
+    var arrondi = Math.round(x * 1000) / 1000;
+    return String(arrondi);
+  }
+
+  // Les variables d'ecart continuent la numerotation : x1, x2 puis x3, x4, x5.
+  function nomsColonnes(r) {
+    var noms = [];
+    var lettre = r.passeParDual ? "y" : "x";
+    for (var j = 0; j < r.n + r.m; j++) noms.push(lettre + (j + 1));
+    return noms;
+  }
+
+  function termes(coeffs, nom) {
+    return coeffs.map(function (v, i) {
+      return fmt(v) + nom + (i + 1);
+    }).join(" + ");
+  }
+
+  function afficherResultat(r) {
+    var html = "";
+
+    if (r.statut !== "OPTIMAL") {
+      html += '<p class="resultat-cle erreur">' + r.message + "</p>";
+      document.getElementById("resultat").innerHTML = html;
+      document.getElementById("carteResultat").classList.remove("cache");
+      document.getElementById("carteEtapes").classList.add("cache");
+      return;
+    }
+
+    if (r.passeParDual) {
+      html += '<div class="encart">';
+      html += "<p><strong>Probleme de minimisation :</strong> il n'est pas sous forme standard "
+            + "(contraintes &ge;), donc on resout son <strong>dual</strong>, qui l'est.</p>";
+      html += '<p class="formule">max f = ' + termes(r.c, "y") + "</p>";
+      for (var i = 0; i < r.m; i++) {
+        html += '<p class="formule">&nbsp;&nbsp;&nbsp;&nbsp;'
+              + termes(r.A[i], "y") + " &le; " + fmt(r.b[i]) + "</p>";
+      }
+      html += "<p>Le tableau final donne alors les deux solutions a la fois : "
+            + "les <strong>y</strong> dans la colonne des valeurs, "
+            + "les <strong>x</strong> dans la ligne z sous les variables d'ecart.</p>";
+      html += "</div>";
+    }
+
+    html += '<p class="resultat-cle ok">f* = ' + fmt(r.valeurOptimale) + "</p>";
+
+    html += '<div class="sol"><div class="titre">Solution du probleme pose'
+          + (r.passeParDual ? " (le primal, minimisation)" : " (maximisation)") + "</div>";
+    r.solutionPrimale.forEach(function (v, i) {
+      html += '<span class="pastille">x' + (i + 1) + " = " + fmt(v) + "</span>";
+    });
+    html += "</div>";
+
+    html += '<div class="sol"><div class="titre">Solution du probleme dual</div>';
+    r.solutionDuale.forEach(function (v, i) {
+      html += '<span class="pastille">' + (r.passeParDual ? "y" : "y") + (i + 1)
+            + " = " + fmt(v) + "</span>";
+    });
+    html += "</div>";
+
+    document.getElementById("resultat").innerHTML = html;
+    document.getElementById("carteResultat").classList.remove("cache");
+  }
+
+  function afficherEtapes(r) {
+    var noms = nomsColonnes(r);
+    var html = "";
+
+    r.etapes.forEach(function (e, k) {
+      html += '<div class="etape"><h3>Tableau ' + k
+            + (k === 0 ? " &mdash; depart" : "") + "</h3>";
+      html += '<div class="defile"><table><thead><tr>'
+            + '<th class="base"></th><th>bi</th>';
+      noms.forEach(function (nom) { html += "<th>" + nom + "</th>"; });
+      html += "</tr></thead><tbody>";
+
+      e.T.forEach(function (ligne, i) {
+        var estObjectif = (i === e.T.length - 1);
+        html += "<tr" + (estObjectif ? ' class="objectif"' : "") + '>';
+        html += '<td class="base">' + (estObjectif ? "f" : noms[e.base[i]]) + "</td>";
+        // le second membre a gauche ; sur la ligne f le coin vaut -f
+        var bi = ligne[ligne.length - 1];
+        html += "<td>" + fmt(estObjectif ? -bi : bi) + "</td>";
+        for (var j = 0; j < ligne.length - 1; j++) {
+          var marque = (i === e.lignePivot && j === e.colonnePivot) ? ' class="pivot"' : "";
+          html += "<td" + marque + ">" + fmt(ligne[j]) + "</td>";
+        }
+        html += "</tr>";
+      });
+
+      html += "</tbody></table></div>";
+      if (e.lignePivot >= 0 && e.colonnePivot >= 0) {
+        html += '<p class="note">Variable entrante : <strong>' + noms[e.colonnePivot]
+              + "</strong> (c<sub>j</sub> &minus; z<sub>j</sub> le plus positif) &mdash; variable sortante : <strong>"
+              + noms[e.base[e.lignePivot]] + "</strong> (rapport minimal).</p>";
+      } else if (k === r.etapes.length - 1 && r.statut === "OPTIMAL") {
+        html += '<p class="note">Aucun c<sub>j</sub> &minus; z<sub>j</sub> positif : l\'optimum est atteint.</p>';
+      }
+      html += "</div>";
+    });
+
+    document.getElementById("etapes").innerHTML = html;
+    document.getElementById("carteEtapes").classList.remove("cache");
+  }
+
+  // --- actions -------------------------------------------------------------
+  function resoudre() {
+    var json = resoudreTexte(assemblerEntree());
+    var r;
+    try {
+      r = JSON.parse(json);
+    } catch (err) {
+      document.getElementById("resultat").innerHTML =
+        '<p class="resultat-cle erreur">Reponse illisible du moteur de calcul.</p>';
+      document.getElementById("carteResultat").classList.remove("cache");
+      return;
+    }
+    afficherResultat(r);
+    if (r.statut === "OPTIMAL") afficherEtapes(r);
+    document.getElementById("carteResultat").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function chargerExemple() {
+    if (elType.value === "2") {
+      // min 2x1 + 3x2  s.c.  x1 + x2 >= 4 ,  x1 + 3x2 >= 6     -> z* = 9 en (3 ; 1)
+      elNbVar.value = 2; elNbCont.value = 2;
+      construireGrille();
+      var v = { c0: 2, c1: 3, a0_0: 1, a0_1: 1, b0: 4, a1_0: 1, a1_1: 3, b1: 6 };
+    } else {
+      // max 3x1 + 5x2  s.c.  x1 <= 4 ,  2x2 <= 12 ,  3x1 + 2x2 <= 18  -> z* = 36 en (2 ; 6)
+      elNbVar.value = 2; elNbCont.value = 3;
+      construireGrille();
+      var v = { c0: 3, c1: 5, a0_0: 1, a0_1: 0, b0: 4,
+                a1_0: 0, a1_1: 2, b1: 12, a2_0: 3, a2_1: 2, b2: 18 };
+    }
+    Object.keys(v).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = v[id];
+    });
+  }
+
+  function vider() {
+    elGrille.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+    document.getElementById("carteResultat").classList.add("cache");
+    document.getElementById("carteEtapes").classList.add("cache");
+  }
+
+  elType.addEventListener("change", construireGrille);
+  elNbVar.addEventListener("input", construireGrille);
+  elNbCont.addEventListener("input", construireGrille);
+  document.getElementById("btnResoudre").addEventListener("click", resoudre);
+  document.getElementById("btnExemple").addEventListener("click", chargerExemple);
+  document.getElementById("btnVider").addEventListener("click", vider);
+
+  construireGrille();
+
+  // --- chargement du module WebAssembly ------------------------------------
+  creerSimplex().then(function (mod) {
+    Module = mod;
+    resoudreTexte = Module.cwrap("resoudreTexte", "string", ["string"]);
+    document.getElementById("btnResoudre").disabled = false;
+  });
+})();
+</script>
+</body>
+</html>

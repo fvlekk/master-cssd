@@ -1,0 +1,351 @@
+
+########## 1_system_users.sql (connecte en SYSTEM) ##########
+SQL> -- Run as SYSTEM in FREEPDB1.
+SQL> -- Q1. Create USER1 (owner of EMP) and USER2 (owner of DEPT). Dropped first so the TP can be replayed;
+SQL> -- USER1 goes first because its foreign key depends on USER2.DEPT.
+SQL> DROP USER IF EXISTS USER1 CASCADE;
+
+User dropped.
+
+SQL> DROP USER IF EXISTS USER2 CASCADE;
+
+User dropped.
+
+SQL> 
+SQL> CREATE USER USER1 IDENTIFIED BY user1 DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
+
+User created.
+
+SQL> CREATE USER USER2 IDENTIFIED BY user2 DEFAULT TABLESPACE USERS QUOTA UNLIMITED ON USERS;
+
+User created.
+
+SQL> 
+SQL> GRANT CREATE SESSION, CREATE TABLE, CREATE SYNONYM TO USER1;
+
+Grant succeeded.
+
+SQL> GRANT CREATE SESSION, CREATE TABLE TO USER2;
+
+Grant succeeded.
+
+SQL> 
+SQL> SELECT USERNAME, DEFAULT_TABLESPACE FROM DBA_USERS WHERE USERNAME IN ('USER1', 'USER2') ORDER BY 1;
+
+USERNAME     DEFAULT_TABLESPACE
+------------ ------------------
+USER1        USERS
+USER2        USERS
+
+2 rows selected.
+
+SQL> EXIT;
+
+########## 2_user2_dept.sql (connecte en USER2) ##########
+SQL> -- Run as USER2.
+SQL> -- Q2. DEPT in the USER2 schema, primary key DEPTNO.
+SQL> CREATE TABLE DEPT (
+  2    DEPTNO NUMBER(2)    CONSTRAINT PK_DEPT PRIMARY KEY,
+  3    DNAME  VARCHAR2(14),
+  4    LOC    VARCHAR2(13)
+  5  );
+
+Table created.
+
+SQL> EXIT;
+
+########## 3_user1_emp.sql (connecte en USER1) ##########
+SQL> -- Run as USER1.
+SQL> -- Q3. EMP in the USER1 schema.
+SQL> CREATE TABLE EMP (
+  2    EMPNO    NUMBER(4)    CONSTRAINT PK_EMP PRIMARY KEY,
+  3    ENAME    VARCHAR2(10),
+  4    JOB      VARCHAR2(9),
+  5    MGR      NUMBER(4),
+  6    HIREDATE DATE,
+  7    SAL      NUMBER(7,2),
+  8    COMM     NUMBER(7,2),
+  9    DEPTNO   NUMBER(2)
+ 10  );
+
+Table created.
+
+SQL> 
+SQL> -- Q4, first attempt: USER1 has no privilege on USER2.DEPT yet, so Oracle refuses the foreign key
+SQL> -- (expected error ORA-00942: USER2.DEPT is invisible to USER1).
+SQL> ALTER TABLE EMP ADD CONSTRAINT FK_EMP_DEPT FOREIGN KEY (DEPTNO) REFERENCES USER2.DEPT (DEPTNO);
+ALTER TABLE EMP ADD CONSTRAINT FK_EMP_DEPT FOREIGN KEY (DEPTNO) REFERENCES USER2.DEPT (DEPTNO)
+                                                                                 *
+ERROR at line 1:
+ORA-00942: table or view "USER2"."DEPT" does not exist
+Help: https://docs.oracle.com/error-help/db/ora-00942/
+
+
+SQL> EXIT;
+
+########## 4_user2_grant_insert.sql (connecte en USER2) ##########
+SQL> -- Run as USER2.
+SQL> -- Q4. The owner of DEPT lets USER1 reference its key (REFERENCES) and read it (SELECT, for the joins).
+SQL> GRANT REFERENCES (DEPTNO), SELECT ON DEPT TO USER1;
+
+Grant succeeded.
+
+SQL> 
+SQL> -- Q5. Departments (data of the course).
+SQL> INSERT INTO DEPT VALUES (10, 'ACCOUNTING', 'NEW YORK');
+
+1 row created.
+
+SQL> INSERT INTO DEPT VALUES (20, 'RESEARCH',   'DALLAS');
+
+1 row created.
+
+SQL> INSERT INTO DEPT VALUES (30, 'SALES',      'CHICAGO');
+
+1 row created.
+
+SQL> INSERT INTO DEPT VALUES (40, 'OPERATIONS', 'BOSTON');
+
+1 row created.
+
+SQL> COMMIT;
+
+Commit complete.
+
+SQL> 
+SQL> SELECT GRANTEE, PRIVILEGE, COLUMN_NAME FROM USER_COL_PRIVS_MADE WHERE TABLE_NAME = 'DEPT'
+  2  UNION ALL
+  3  SELECT GRANTEE, PRIVILEGE, NULL FROM USER_TAB_PRIVS_MADE WHERE TABLE_NAME = 'DEPT';
+
+GRANTEE      PRIVILEGE  COLUMN_NAME
+------------ ---------- ------------
+USER1        REFERENCES DEPTNO
+USER1        SELECT
+
+2 rows selected.
+
+SQL> EXIT;
+
+########## 5_user1_fk_queries.sql (connecte en USER1) ##########
+SQL> -- Run as USER1.
+SQL> -- Q4. Foreign key across schemas, now allowed by the REFERENCES privilege.
+SQL> ALTER TABLE EMP ADD CONSTRAINT FK_EMP_DEPT FOREIGN KEY (DEPTNO) REFERENCES USER2.DEPT (DEPTNO);
+
+Table altered.
+
+SQL> 
+SQL> SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE, R_OWNER, R_CONSTRAINT_NAME
+  2  FROM USER_CONSTRAINTS WHERE TABLE_NAME = 'EMP' ORDER BY CONSTRAINT_TYPE;
+
+CONSTRAINT_NAME C R_OWNER      R_CONSTRAINT_NAME
+--------------- - ------------ -----------------
+PK_EMP          P
+FK_EMP_DEPT     R USER2        PK_DEPT
+
+2 rows selected.
+
+SQL> 
+SQL> -- Q5. Employees (data of the course).
+SQL> INSERT INTO EMP VALUES (7369, 'SMITH',  'CLERK',     7902, DATE '1980-12-17',  800, NULL, 20);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7499, 'ALLEN',  'SALESMAN',  7698, DATE '1981-02-20', 1600,  300, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7521, 'WARD',   'SALESMAN',  7698, DATE '1981-02-22', 1250,  500, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7566, 'JONES',  'MANAGER',   7839, DATE '1981-04-02', 2975, NULL, 20);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7654, 'MARTIN', 'SALESMAN',  7698, DATE '1981-09-28', 1250, 1400, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7698, 'BLAKE',  'MANAGER',   7839, DATE '1981-05-01', 2850, NULL, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7782, 'CLARK',  'MANAGER',   7839, DATE '1981-06-09', 2450, NULL, 10);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7788, 'SCOTT',  'ANALYST',   7566, DATE '1982-12-09', 3000, NULL, 20);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7839, 'KING',   'PRESIDENT', NULL, DATE '1981-11-17', 5000, NULL, 10);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7844, 'TURNER', 'SALESMAN',  7698, DATE '1981-09-08', 1500,    0, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7876, 'ADAMS',  'CLERK',     7788, DATE '1983-01-12', 1100, NULL, 20);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7900, 'JAMES',  'CLERK',     7698, DATE '1981-12-03',  950, NULL, 30);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7902, 'FORD',   'ANALYST',   7566, DATE '1981-12-03', 3000, NULL, 20);
+
+1 row created.
+
+SQL> INSERT INTO EMP VALUES (7934, 'MILLER', 'CLERK',     7782, DATE '1982-01-23', 1300, NULL, 10);
+
+1 row created.
+
+SQL> COMMIT;
+
+Commit complete.
+
+SQL> 
+SQL> -- Q6. Employees with their department: the other schema is named explicitly (owner.table).
+SQL> SELECT E.EMPNO, E.ENAME, E.JOB, E.SAL, D.DEPTNO, D.DNAME, D.LOC
+  2  FROM EMP E JOIN USER2.DEPT D ON E.DEPTNO = D.DEPTNO
+  3  ORDER BY D.DEPTNO, E.ENAME;
+
+     EMPNO ENAME        JOB              SAL     DEPTNO DNAME        LOC
+---------- ------------ --------- ---------- ---------- ------------ ------------
+      7782 CLARK        MANAGER         2450         10 ACCOUNTING   NEW YORK
+      7839 KING         PRESIDENT       5000         10 ACCOUNTING   NEW YORK
+      7934 MILLER       CLERK           1300         10 ACCOUNTING   NEW YORK
+      7876 ADAMS        CLERK           1100         20 RESEARCH     DALLAS
+      7902 FORD         ANALYST         3000         20 RESEARCH     DALLAS
+      7566 JONES        MANAGER         2975         20 RESEARCH     DALLAS
+      7788 SCOTT        ANALYST         3000         20 RESEARCH     DALLAS
+      7369 SMITH        CLERK            800         20 RESEARCH     DALLAS
+      7499 ALLEN        SALESMAN        1600         30 SALES        CHICAGO
+      7698 BLAKE        MANAGER         2850         30 SALES        CHICAGO
+      7900 JAMES        CLERK            950         30 SALES        CHICAGO
+      7654 MARTIN       SALESMAN        1250         30 SALES        CHICAGO
+      7844 TURNER       SALESMAN        1500         30 SALES        CHICAGO
+      7521 WARD         SALESMAN        1250         30 SALES        CHICAGO
+
+14 rows selected.
+
+SQL> 
+SQL> -- Q7, child side.
+SQL> -- (a) department 99 does not exist: expected ORA-02291 (parent key not found)
+SQL> INSERT INTO EMP (EMPNO, ENAME, JOB, SAL, DEPTNO) VALUES (8000, 'TEST', 'CLERK', 1000, 99);
+INSERT INTO EMP (EMPNO, ENAME, JOB, SAL, DEPTNO) VALUES (8000, 'TEST', 'CLERK', 1000, 99)
+*
+ERROR at line 1:
+ORA-02291: integrity constraint (USER1.FK_EMP_DEPT) violated - parent key not found
+Help: https://docs.oracle.com/error-help/db/ora-02291/
+
+
+SQL> -- (b) moving an employee to a missing department: expected ORA-02291
+SQL> UPDATE EMP SET DEPTNO = 99 WHERE EMPNO = 7369;
+UPDATE EMP SET DEPTNO = 99 WHERE EMPNO = 7369
+*
+ERROR at line 1:
+ORA-02291: integrity constraint (USER1.FK_EMP_DEPT) violated - parent key not found
+Help: https://docs.oracle.com/error-help/db/ora-02291/
+
+
+SQL> -- (c) existing department 40: accepted, then cancelled
+SQL> INSERT INTO EMP (EMPNO, ENAME, JOB, SAL, DEPTNO) VALUES (8000, 'TEST', 'CLERK', 1000, 40);
+
+1 row created.
+
+SQL> ROLLBACK;
+
+Rollback complete.
+
+SQL> -- (d) NULL is accepted: a foreign key only checks values that are filled in
+SQL> INSERT INTO EMP (EMPNO, ENAME, JOB, SAL, DEPTNO) VALUES (8001, 'SANSDEPT', 'CLERK', 1000, NULL);
+
+1 row created.
+
+SQL> ROLLBACK;
+
+Rollback complete.
+
+SQL> 
+SQL> -- Q8. Private synonym: USER1 writes DEPT instead of USER2.DEPT.
+SQL> CREATE SYNONYM DEPT FOR USER2.DEPT;
+
+Synonym created.
+
+SQL> 
+SQL> SELECT E.ENAME, D.DNAME, D.LOC
+  2  FROM EMP E JOIN DEPT D ON E.DEPTNO = D.DEPTNO
+  3  WHERE D.DEPTNO = 10
+  4  ORDER BY E.ENAME;
+
+ENAME        DNAME        LOC
+------------ ------------ ------------
+CLARK        ACCOUNTING   NEW YORK
+KING         ACCOUNTING   NEW YORK
+MILLER       ACCOUNTING   NEW YORK
+
+3 rows selected.
+
+SQL> 
+SQL> SELECT SYNONYM_NAME, TABLE_OWNER, TABLE_NAME FROM USER_SYNONYMS;
+
+SYNONYM_NAME TABLE_OWNER  TABLE_NAME
+------------ ------------ ------------
+DEPT         USER2        DEPT
+
+1 row selected.
+
+SQL> EXIT;
+
+########## 6_user2_fk_tests.sql (connecte en USER2) ##########
+SQL> -- Run as USER2.
+SQL> -- Q7, parent side.
+SQL> -- (e) department 10 still has employees: expected ORA-02292 (child record found)
+SQL> DELETE FROM DEPT WHERE DEPTNO = 10;
+DELETE FROM DEPT WHERE DEPTNO = 10
+*
+ERROR at line 1:
+ORA-02292: integrity constraint (USER1.FK_EMP_DEPT) violated - child record found
+Help: https://docs.oracle.com/error-help/db/ora-02292/
+
+
+SQL> -- (f) changing a referenced key: expected ORA-02292
+SQL> UPDATE DEPT SET DEPTNO = 11 WHERE DEPTNO = 10;
+UPDATE DEPT SET DEPTNO = 11 WHERE DEPTNO = 10
+*
+ERROR at line 1:
+ORA-02292: integrity constraint (USER1.FK_EMP_DEPT) violated - child record found
+Help: https://docs.oracle.com/error-help/db/ora-02292/
+
+
+SQL> -- (g) department 40 has no employee: deletion accepted, then cancelled
+SQL> DELETE FROM DEPT WHERE DEPTNO = 40;
+
+1 row deleted.
+
+SQL> ROLLBACK;
+
+Rollback complete.
+
+SQL> -- (h) the table cannot be dropped while USER1.EMP references it: expected ORA-02449
+SQL> DROP TABLE DEPT;
+DROP TABLE DEPT
+           *
+ERROR at line 1:
+ORA-02449: unique/primary keys in table referenced by foreign keys
+Help: https://docs.oracle.com/error-help/db/ora-02449/
+
+
+SQL> 
+SQL> SELECT COUNT(*) AS NB_DEPT FROM DEPT;
+
+   NB_DEPT
+----------
+         4
+
+1 row selected.
+
+SQL> EXIT;
